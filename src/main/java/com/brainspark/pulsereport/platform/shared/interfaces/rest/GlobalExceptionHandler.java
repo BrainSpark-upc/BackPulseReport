@@ -14,17 +14,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Interface layer exception handler translating domain and validation errors
- * to HTTP problem responses. Handles:
- * - {@link IllegalArgumentException}: domain invariant violations and input validation
- * - {@link MethodArgumentNotValidException}: Resource validation failures from
- *   Jakarta Bean Validation
- * Localizes error messages per request locale, forming the error translation boundary
- * between domain logic and HTTP clients.
- *
- * @since 1.0
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,12 +23,6 @@ public class GlobalExceptionHandler {
         this.messageSource = messageSource;
     }
 
-    /**
-     * Handles MethodArgumentNotValidException.
-     * @param exception The {@link MethodArgumentNotValidException} exception to handle
-     * @param locale The {@link Locale} locale to use for error messages
-     * @return The {@link ErrorResponse} error response
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ErrorResponse handleException(MethodArgumentNotValidException exception, Locale locale) {
@@ -55,12 +38,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    /**
-     * Handles IllegalArgumentException.
-     * @param exception The {@link IllegalArgumentException} exception to handle
-     * @param locale The {@link Locale} locale to use for error messages
-     * @return The {@link ErrorResponse} error response
-     */
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     ErrorResponse handleException(IllegalArgumentException exception, Locale locale) {

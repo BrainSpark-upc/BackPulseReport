@@ -1,23 +1,15 @@
-package com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.strategy;
+package com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.configuration.strategy;
 
 import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
-
 import static io.github.encryptorcode.pluralize.Pluralize.pluralize;
 
-/**
- * Hibernate physical naming strategy that converts identifiers to snake case.
- * Table names are also pluralized before snake-case conversion.
- *
- * @since 1.0
- * @see PhysicalNamingStrategy
- */
-public class SnakeCasePhysicalNamingStrategy implements PhysicalNamingStrategy {
 
+public class SnakeCaseWithPluralizedTablePhysicalNamingStrategy implements PhysicalNamingStrategy {
     @Override
     public Identifier toPhysicalCatalogName(Identifier identifier, JdbcEnvironment jdbcEnvironment) {
-        return this.toSnakeCase(identifier);
+        return null;
     }
 
     @Override
@@ -40,29 +32,20 @@ public class SnakeCasePhysicalNamingStrategy implements PhysicalNamingStrategy {
         return this.toSnakeCase(identifier);
     }
 
-    private Identifier toSnakeCase(Identifier identifier) {
+    private Identifier toSnakeCase(final Identifier identifier) {
         if (identifier == null) {
             return null;
         }
-
-        String text = identifier.getText();
-
-        String snakeCaseText = text
-                .replaceAll("([a-z])([A-Z])", "$1_$2")
-                .replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
-                .replace('-', '_')
+        final String regex = "([a-z])([A-Z])";
+        final String replacement = "$1_$2";
+        final String newName = identifier.getText()
+                .replaceAll(regex, replacement)
                 .toLowerCase();
-
-        return Identifier.toIdentifier(snakeCaseText, identifier.isQuoted());
+        return Identifier.toIdentifier(newName);
     }
 
-    private Identifier toPlural(Identifier identifier) {
-        if (identifier == null) {
-            return null;
-        }
-
-        String pluralText = pluralize(identifier.getText());
-
-        return Identifier.toIdentifier(pluralText, identifier.isQuoted());
+    private Identifier toPlural(final Identifier identifier) {
+        final String newName = pluralize(identifier.getText());
+        return Identifier.toIdentifier(newName);
     }
 }
