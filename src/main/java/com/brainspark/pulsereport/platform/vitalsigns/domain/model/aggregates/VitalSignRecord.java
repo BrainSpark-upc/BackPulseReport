@@ -1,6 +1,7 @@
 package com.brainspark.pulsereport.platform.vitalsigns.domain.model.aggregates;
 
 import com.brainspark.pulsereport.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.exceptions.InvalidVitalSignRecordException;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.commands.CreateVitalSignRecordCommand;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.events.VitalSignRecordedEvent;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.valueobjects.BloodPressure;
@@ -47,7 +48,7 @@ public class VitalSignRecord extends AbstractDomainAggregateRoot<VitalSignRecord
     }
     public VitalSignRecord assignRiskLevel(RiskLevel riskLevel) {
         if(riskLevel==null){
-            throw new IllegalArgumentException("Risk level is required");
+            throw new InvalidVitalSignRecordException("Risk level is required");
         }
         this.riskLevel = riskLevel;
         return this;
