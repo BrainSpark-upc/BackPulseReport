@@ -1,0 +1,16 @@
+package com.brainspark.pulsereport.platform.handover.interfaces.rest.transform;
+
+import com.brainspark.pulsereport.platform.handover.domain.model.aggregates.Handover;
+import com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.HandoverResource;
+
+
+public class HandoverResourceFromEntityAssembler {
+
+    public static HandoverResource toResourceFromEntity(Handover entity) {
+        return new HandoverResource(
+                entity.getId(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getStatus().name());
+    }
+}

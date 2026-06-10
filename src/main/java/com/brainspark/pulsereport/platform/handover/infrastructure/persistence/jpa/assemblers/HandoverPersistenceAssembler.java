@@ -1,0 +1,37 @@
+package com.brainspark.pulsereport.platform.handover.infrastructure.persistence.jpa.assemblers;
+
+import com.brainspark.pulsereport.platform.handover.domain.model.aggregates.Handover;
+import com.brainspark.pulsereport.platform.handover.infrastructure.persistence.jpa.entities.HandoverPersistenceEntity;
+
+
+public final class HandoverPersistenceAssembler {
+
+    private HandoverPersistenceAssembler() {
+    }
+
+    public static Handover toDomainFromPersistence(HandoverPersistenceEntity entity) {
+        if (entity == null) return null;
+
+        var handover = new Handover();
+        handover.setId(entity.getId());
+        handover.setTitle(entity.getTitle());
+        handover.setDescription(entity.getDescription());
+        handover.setStatus(entity.getStatus());
+        return handover;
+    }
+
+    public static HandoverPersistenceEntity toPersistenceFromDomain(Handover handover) {
+        if (handover == null) return null;
+
+        var entity = new HandoverPersistenceEntity();
+        // Only set ID if the handover is being updated (has a non-null ID)
+        // For new handovers, leave ID null to allow JPA to generate it
+        if (handover.getId() != null) {
+            entity.setId(handover.getId());
+        }
+        entity.setTitle(handover.getTitle());
+        entity.setDescription(handover.getDescription());
+        entity.setStatus(handover.getStatus());
+        return entity;
+    }
+}
