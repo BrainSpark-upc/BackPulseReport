@@ -7,6 +7,7 @@ import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVi
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.resources.CreateVitalSignRecordResource;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.transform.CreateVitalSignRecordCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.transform.VitalSignRecordResourceFromEntityAssembler;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetAllVitalSignRecordsQuery;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,20 @@ public class VitalSignRecordsController {
                 result,
                 VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllVitalSignRecords() {
+        var query = new GetAllVitalSignRecordsQuery();
+        var result = vitalSignRecordQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                vitalSignRecords -> vitalSignRecords.stream()
+                        .map(VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity)
+                        .toList(),
+                HttpStatus.OK
         );
     }
 
