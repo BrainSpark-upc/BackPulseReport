@@ -6,6 +6,7 @@ import com.brainspark.pulsereport.platform.vitalsigns.application.queryservices.
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.aggregates.VitalSignRecord;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetAllVitalSignRecordsQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.repositories.VitalSignRecordRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,4 +37,12 @@ public class VitalSignRecordQueryServiceImpl implements VitalSignRecordQueryServ
 
         return Result.success(vitalSignRecords);
     }
+
+    @Override
+    public Result<List<VitalSignRecord>, ApplicationError> handle(GetVitalSignRecordsByPatientIdQuery query) {
+        var vitalSignRecords = vitalSignRecordRepository.findByPatientId(query.patientId());
+
+        return Result.success(vitalSignRecords);
+    }
+
 }
