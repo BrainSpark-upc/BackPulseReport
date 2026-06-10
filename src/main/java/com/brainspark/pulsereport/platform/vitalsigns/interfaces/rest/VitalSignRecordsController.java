@@ -2,6 +2,8 @@ package com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest;
 
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.brainspark.pulsereport.platform.vitalsigns.application.commandservices.VitalSignRecordCommandService;
+import com.brainspark.pulsereport.platform.vitalsigns.application.queryservices.VitalSignRecordQueryService;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.resources.CreateVitalSignRecordResource;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.transform.CreateVitalSignRecordCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.transform.VitalSignRecordResourceFromEntityAssembler;
@@ -19,9 +21,15 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class VitalSignRecordsController {
 
     private final VitalSignRecordCommandService vitalSignRecordCommandService;
+    private final VitalSignRecordQueryService vitalSignRecordQueryService;
 
-    public VitalSignRecordsController(VitalSignRecordCommandService vitalSignRecordCommandService) {
+
+    public VitalSignRecordsController(
+            VitalSignRecordCommandService vitalSignRecordCommandService,
+            VitalSignRecordQueryService vitalSignRecordQueryService
+    ) {
         this.vitalSignRecordCommandService = vitalSignRecordCommandService;
+        this.vitalSignRecordQueryService = vitalSignRecordQueryService;
     }
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
@@ -33,6 +41,18 @@ public class VitalSignRecordsController {
                 result,
                 VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping("/{vitalSignRecordId}")
+    public ResponseEntity<?> getVitalSignRecordById(@PathVariable Long vitalSignRecordId) {
+        var query = new GetVitalSignRecordByIdQuery(vitalSignRecordId);
+        var result = vitalSignRecordQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
         );
     }
 }
