@@ -6,14 +6,18 @@ import com.brainspark.pulsereport.platform.vitalsigns.domain.model.commands.Crea
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.events.VitalSignRecordedEvent;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.valueobjects.BloodPressure;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.valueobjects.RiskLevel;
+import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Getter
 public class VitalSignRecord extends AbstractDomainAggregateRoot<VitalSignRecord> {
+
     @Setter
     private Long id;
+
     private Long patientId;
     private Long nurseId;
     private Integer heartRate;
@@ -25,9 +29,10 @@ public class VitalSignRecord extends AbstractDomainAggregateRoot<VitalSignRecord
     private LocalDateTime recordedAt;
 
     public VitalSignRecord() {
-        this.riskLevel= RiskLevel.UNASSESSED;
-        this.recordedAt= LocalDateTime.now();
+        this.riskLevel = RiskLevel.UNASSESSED;
+        this.recordedAt = LocalDateTime.now();
     }
+
     private VitalSignRecord(
             Long id,
             Long patientId,
@@ -51,7 +56,8 @@ public class VitalSignRecord extends AbstractDomainAggregateRoot<VitalSignRecord
         this.riskLevel = riskLevel;
         this.recordedAt = recordedAt;
     }
-    public VitalSignRecord(CreateVitalSignRecordCommand command){
+
+    public VitalSignRecord(CreateVitalSignRecordCommand command) {
         this.patientId = command.patientId();
         this.nurseId = command.nurseId();
         this.heartRate = command.heartRate();
@@ -60,21 +66,26 @@ public class VitalSignRecord extends AbstractDomainAggregateRoot<VitalSignRecord
         this.oxygenSaturation = command.oxygenSaturation();
         this.temperature = command.temperature();
         this.riskLevel = RiskLevel.UNASSESSED;
-        this.recordedAt= command.recordedAt() !=null
-        ? command.recordedAt(): LocalDateTime.now();
+        this.recordedAt = command.recordedAt() != null
+                ? command.recordedAt()
+                : LocalDateTime.now();
+
         this.registerDomainEvent(new VitalSignRecordedEvent(
                 this.patientId,
                 this.nurseId,
                 this.recordedAt
         ));
     }
+
     public VitalSignRecord assignRiskLevel(RiskLevel riskLevel) {
-        if(riskLevel==null){
+        if (riskLevel == null) {
             throw new InvalidVitalSignRecordException("Risk level is required");
         }
+
         this.riskLevel = riskLevel;
         return this;
     }
+
     public static VitalSignRecord reconstitute(
             Long id,
             Long patientId,
