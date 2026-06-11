@@ -3,6 +3,7 @@ package com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.brainspark.pulsereport.platform.vitalsigns.application.commandservices.VitalSignRecordCommandService;
 import com.brainspark.pulsereport.platform.vitalsigns.application.queryservices.VitalSignRecordQueryService;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetLatestVitalSignRecordByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.interfaces.rest.resources.CreateVitalSignRecordResource;
@@ -70,6 +71,18 @@ public class VitalSignRecordsController {
                 vitalSignRecords -> vitalSignRecords.stream()
                         .map(VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity)
                         .toList(),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/patients/{patientId}/latest")
+    public ResponseEntity<?> getLatestVitalSignRecordByPatientId(@PathVariable Long patientId) {
+        var query = new GetLatestVitalSignRecordByPatientIdQuery(patientId);
+        var result = vitalSignRecordQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                VitalSignRecordResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK
         );
     }
