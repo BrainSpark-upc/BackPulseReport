@@ -12,6 +12,8 @@ public interface VitalSignRecordRepository {
 
     List<VitalSignRecord> findByPatientId(Long patientId);
 
+    Optional<VitalSignRecord> findLatestByPatientId(Long patientId);
+
     VitalSignRecord save(VitalSignRecord vitalSignRecord);
 
     boolean existsById(Long id);

@@ -4,6 +4,7 @@ import com.brainspark.pulsereport.platform.shared.application.result.Application
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.aggregates.VitalSignRecord;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetAllVitalSignRecordsQuery;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetLatestVitalSignRecordByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordsByPatientIdQuery;
 
@@ -16,4 +17,6 @@ public interface VitalSignRecordQueryService {
     Result<List<VitalSignRecord>, ApplicationError> handle(GetAllVitalSignRecordsQuery query);
 
     Result<List<VitalSignRecord>, ApplicationError> handle(GetVitalSignRecordsByPatientIdQuery query);
+
+    Result<VitalSignRecord, ApplicationError> handle(GetLatestVitalSignRecordByPatientIdQuery query);
 }

@@ -5,6 +5,7 @@ import com.brainspark.pulsereport.platform.shared.application.result.Result;
 import com.brainspark.pulsereport.platform.vitalsigns.application.queryservices.VitalSignRecordQueryService;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.aggregates.VitalSignRecord;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetAllVitalSignRecordsQuery;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetLatestVitalSignRecordByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.repositories.VitalSignRecordRepository;
@@ -45,4 +46,13 @@ public class VitalSignRecordQueryServiceImpl implements VitalSignRecordQueryServ
         return Result.success(vitalSignRecords);
     }
 
+    @Override
+    public Result<VitalSignRecord, ApplicationError> handle(GetLatestVitalSignRecordByPatientIdQuery query) {
+        return vitalSignRecordRepository.findLatestByPatientId(query.patientId())
+                .<Result<VitalSignRecord, ApplicationError>>map(Result::success)
+                .orElseGet(() -> Result.failure(ApplicationError.notFound(
+                        "Latest vital sign record for patient",
+                        query.patientId().toString()
+                )));
+    }
 }
