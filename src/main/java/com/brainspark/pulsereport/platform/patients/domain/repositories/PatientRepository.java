@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.patients.domain.repositories;
 
 import com.brainspark.pulsereport.platform.patients.domain.model.aggregates.Patient;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PatientRepository {
@@ -11,4 +12,6 @@ public interface PatientRepository {
     boolean existsByDocumentNumber(String documentNumber);
 
     Optional<Patient> findById(Long id);
+
+    List<Patient> findAll();
 }

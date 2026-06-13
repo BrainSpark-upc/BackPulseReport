@@ -6,6 +6,7 @@ import com.brainspark.pulsereport.platform.patients.infrastructure.persistence.j
 import com.brainspark.pulsereport.platform.patients.infrastructure.persistence.jpa.repositories.PatientPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -34,5 +35,13 @@ public class PatientRepositoryImpl implements PatientRepository {
     public Optional<Patient> findById(Long id) {
         return patientPersistenceRepository.findById(id)
                 .map(PatientPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public List<Patient> findAll() {
+        return patientPersistenceRepository.findAll()
+                .stream()
+                .map(PatientPersistenceAssembler::toDomainFromPersistence)
+                .toList();
     }
 }
