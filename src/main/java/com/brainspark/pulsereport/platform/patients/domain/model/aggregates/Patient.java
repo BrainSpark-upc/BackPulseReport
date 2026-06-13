@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.patients.domain.model.aggregates;
 
 import com.brainspark.pulsereport.platform.patients.domain.exceptions.InvalidPatientException;
 import com.brainspark.pulsereport.platform.patients.domain.model.commands.CreatePatientCommand;
+import com.brainspark.pulsereport.platform.patients.domain.model.commands.UpdatePatientCommand;
 import com.brainspark.pulsereport.platform.patients.domain.model.valueobjects.PatientStatus;
 import com.brainspark.pulsereport.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
@@ -74,44 +75,102 @@ public class Patient extends AbstractDomainAggregateRoot<Patient> {
         this.admissionDate = admissionDate;
     }
 
+    public void update(UpdatePatientCommand command) {
+        validate(command);
+
+        this.firstName = command.firstName().trim();
+        this.lastName = command.lastName().trim();
+        this.documentNumber = command.documentNumber().trim();
+        this.birthDate = command.birthDate();
+        this.gender = command.gender().trim();
+        this.diagnosis = command.diagnosis().trim();
+        this.roomNumber = command.roomNumber().trim();
+        this.bedNumber = command.bedNumber().trim();
+        this.attendingPhysician = command.attendingPhysician().trim();
+        this.status = command.status() != null ? command.status() : PatientStatus.OBSERVATION;
+        this.admissionDate = command.admissionDate() != null ? command.admissionDate() : LocalDate.now();
+    }
+
     private void validate(CreatePatientCommand command) {
-        if (command.firstName() == null || command.firstName().isBlank()) {
+        validatePatientData(
+                command.firstName(),
+                command.lastName(),
+                command.documentNumber(),
+                command.birthDate(),
+                command.gender(),
+                command.diagnosis(),
+                command.roomNumber(),
+                command.bedNumber(),
+                command.attendingPhysician()
+        );
+    }
+
+    private void validate(UpdatePatientCommand command) {
+        if (command.patientId() == null || command.patientId() <= 0) {
+            throw new InvalidPatientException("Patient id is required");
+        }
+
+        validatePatientData(
+                command.firstName(),
+                command.lastName(),
+                command.documentNumber(),
+                command.birthDate(),
+                command.gender(),
+                command.diagnosis(),
+                command.roomNumber(),
+                command.bedNumber(),
+                command.attendingPhysician()
+        );
+    }
+
+    private void validatePatientData(
+            String firstName,
+            String lastName,
+            String documentNumber,
+            LocalDate birthDate,
+            String gender,
+            String diagnosis,
+            String roomNumber,
+            String bedNumber,
+            String attendingPhysician
+    ) {
+        if (firstName == null || firstName.isBlank()) {
             throw new InvalidPatientException("First name is required");
         }
 
-        if (command.lastName() == null || command.lastName().isBlank()) {
+        if (lastName == null || lastName.isBlank()) {
             throw new InvalidPatientException("Last name is required");
         }
 
-        if (command.documentNumber() == null || command.documentNumber().isBlank()) {
+        if (documentNumber == null || documentNumber.isBlank()) {
             throw new InvalidPatientException("Document number is required");
         }
 
-        if (command.birthDate() == null) {
+        if (birthDate == null) {
             throw new InvalidPatientException("Birth date is required");
         }
 
-        if (command.birthDate().isAfter(LocalDate.now())) {
+        if (birthDate.isAfter(LocalDate.now())) {
             throw new InvalidPatientException("Birth date cannot be in the future");
         }
 
-        if (command.gender() == null || command.gender().isBlank()) {
+        if (gender == null || gender.isBlank()) {
             throw new InvalidPatientException("Gender is required");
         }
 
-        if (command.diagnosis() == null || command.diagnosis().isBlank()) {
+        if (diagnosis == null || diagnosis.isBlank()) {
             throw new InvalidPatientException("Diagnosis is required");
         }
 
-        if (command.roomNumber() == null || command.roomNumber().isBlank()) {
+        if (roomNumber == null || roomNumber.isBlank()) {
             throw new InvalidPatientException("Room number is required");
         }
 
-        if (command.bedNumber() == null || command.bedNumber().isBlank()) {
+        if (bedNumber == null || bedNumber.isBlank()) {
             throw new InvalidPatientException("Bed number is required");
         }
 
-        if (command.attendingPhysician() == null || command.attendingPhysician().isBlank()) {
+        if (attendingPhysician == null || attendingPhysician.isBlank()) {
             throw new InvalidPatientException("Attending physician is required");
         }
     }
