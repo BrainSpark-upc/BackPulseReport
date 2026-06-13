@@ -4,6 +4,7 @@ import com.brainspark.pulsereport.platform.patients.application.commandservices.
 import com.brainspark.pulsereport.platform.patients.domain.exceptions.PatientAlreadyExistsException;
 import com.brainspark.pulsereport.platform.patients.domain.model.aggregates.Patient;
 import com.brainspark.pulsereport.platform.patients.domain.model.commands.CreatePatientCommand;
+import com.brainspark.pulsereport.platform.patients.domain.model.commands.DeletePatientCommand;
 import com.brainspark.pulsereport.platform.patients.domain.model.commands.UpdatePatientCommand;
 import com.brainspark.pulsereport.platform.patients.domain.repositories.PatientRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.ApplicationError;
@@ -74,6 +75,36 @@ public class PatientCommandServiceImpl implements PatientCommandService {
         } catch (RuntimeException exception) {
             return Result.failure(ApplicationError.businessRuleViolation(
                     "update patient",
+                    exception.getMessage()
+            ));
+        }
+    }
+
+    @Override
+    public Result<Void, ApplicationError> handle(DeletePatientCommand command) {
+        try {
+            if (command.patientId() == null || command.patientId() <= 0) {
+                return Result.failure(ApplicationError.businessRuleViolation(
+                        "delete patient",
+                        "Patient id is required"
+                ));
+            }
+
+            var patientOptional = patientRepository.findById(command.patientId());
+
+            if (patientOptional.isEmpty()) {
+                return Result.failure(ApplicationError.notFound(
+                        "Patient",
+                        "Patient with id %s was not found.".formatted(command.patientId())
+                ));
+            }
+
+            patientRepository.deleteById(command.patientId());
+
+            return Result.success(null);
+        } catch (RuntimeException exception) {
+            return Result.failure(ApplicationError.businessRuleViolation(
+                    "delete patient",
                     exception.getMessage()
             ));
         }
