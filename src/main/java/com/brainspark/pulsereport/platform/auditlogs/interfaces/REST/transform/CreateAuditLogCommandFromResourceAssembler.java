@@ -4,7 +4,7 @@ import com.brainspark.pulsereport.platform.auditlogs.domain.model.commands.Creat
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.CreateAuditLogResource;
 
 /**
- * Maps an inbound {@link CreateAuditLogResource} to a {@link CreateAuditLogCommand}.
+ * Stateless assembler that maps an inbound {@link CreateAuditLogResource} to a domain command.
  */
 public final class CreateAuditLogCommandFromResourceAssembler {
 
@@ -12,14 +12,13 @@ public final class CreateAuditLogCommandFromResourceAssembler {
 
     public static CreateAuditLogCommand toCommandFromResource(CreateAuditLogResource resource) {
         return new CreateAuditLogCommand(
-                resource.responsibleUserId(),
-                resource.auditedEntityType(),
-                resource.auditedEntityId(),
+                resource.patientId(),
+                resource.entityType(),
+                resource.entityId(),
                 resource.actionType(),
-                resource.occurredAt(),
-                resource.detail()
+                resource.performedBy(),
+                resource.performedAt(),
+                resource.metadata()
         );
     }
 }
-
-
