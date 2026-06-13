@@ -5,8 +5,10 @@ import com.brainspark.pulsereport.platform.patients.application.queryservices.Pa
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetAllPatientsQuery;
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetPatientByIdQuery;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.resources.CreatePatientResource;
+import com.brainspark.pulsereport.platform.patients.interfaces.rest.resources.UpdatePatientResource;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.transform.CreatePatientCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.transform.PatientResourceFromEntityAssembler;
+import com.brainspark.pulsereport.platform.patients.interfaces.rest.transform.UpdatePatientCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -62,6 +64,21 @@ public class PatientsController {
     public ResponseEntity<?> getPatientById(@PathVariable Long patientId) {
         var query = new GetPatientByIdQuery(patientId);
         var result = patientQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                PatientResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PutMapping(value = "/{patientId}", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> updatePatient(
+            @PathVariable Long patientId,
+            @RequestBody @Valid UpdatePatientResource resource
+    ) {
+        var command = UpdatePatientCommandFromResourceAssembler.toCommandFromResource(patientId, resource);
+        var result = patientCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
