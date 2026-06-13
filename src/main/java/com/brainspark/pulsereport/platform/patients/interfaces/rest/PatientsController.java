@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.patients.interfaces.rest;
 
 import com.brainspark.pulsereport.platform.patients.application.commandservices.PatientCommandService;
 import com.brainspark.pulsereport.platform.patients.application.queryservices.PatientQueryService;
+import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetAllPatientsQuery;
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetPatientByIdQuery;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.resources.CreatePatientResource;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.transform.CreatePatientCommandFromResourceAssembler;
@@ -40,6 +41,20 @@ public class PatientsController {
                 result,
                 PatientResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllPatients() {
+        var query = new GetAllPatientsQuery();
+        var result = patientQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                patients -> patients.stream()
+                        .map(PatientResourceFromEntityAssembler::toResourceFromEntity)
+                        .toList(),
+                HttpStatus.OK
         );
     }
 
