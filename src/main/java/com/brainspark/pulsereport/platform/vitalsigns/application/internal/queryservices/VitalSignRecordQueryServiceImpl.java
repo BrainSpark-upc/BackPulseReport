@@ -4,9 +4,14 @@ import com.brainspark.pulsereport.platform.shared.application.result.Application
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
 import com.brainspark.pulsereport.platform.vitalsigns.application.queryservices.VitalSignRecordQueryService;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.aggregates.VitalSignRecord;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetAllVitalSignRecordsQuery;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetLatestVitalSignRecordByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordByIdQuery;
+import com.brainspark.pulsereport.platform.vitalsigns.domain.model.queries.GetVitalSignRecordsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.vitalsigns.domain.repositories.VitalSignRecordRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class VitalSignRecordQueryServiceImpl implements VitalSignRecordQueryService {
@@ -24,6 +29,30 @@ public class VitalSignRecordQueryServiceImpl implements VitalSignRecordQueryServ
                 .orElseGet(() -> Result.failure(ApplicationError.notFound(
                         "Vital sign record",
                         query.vitalSignRecordId().toString()
+                )));
+    }
+
+    @Override
+    public Result<List<VitalSignRecord>, ApplicationError> handle(GetAllVitalSignRecordsQuery query) {
+        var vitalSignRecords = vitalSignRecordRepository.findAll();
+
+        return Result.success(vitalSignRecords);
+    }
+
+    @Override
+    public Result<List<VitalSignRecord>, ApplicationError> handle(GetVitalSignRecordsByPatientIdQuery query) {
+        var vitalSignRecords = vitalSignRecordRepository.findByPatientId(query.patientId());
+
+        return Result.success(vitalSignRecords);
+    }
+
+    @Override
+    public Result<VitalSignRecord, ApplicationError> handle(GetLatestVitalSignRecordByPatientIdQuery query) {
+        return vitalSignRecordRepository.findLatestByPatientId(query.patientId())
+                .<Result<VitalSignRecord, ApplicationError>>map(Result::success)
+                .orElseGet(() -> Result.failure(ApplicationError.notFound(
+                        "Latest vital sign record for patient",
+                        query.patientId().toString()
                 )));
     }
 }

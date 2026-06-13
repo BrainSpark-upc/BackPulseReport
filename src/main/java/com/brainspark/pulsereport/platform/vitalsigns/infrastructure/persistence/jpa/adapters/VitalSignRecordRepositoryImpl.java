@@ -47,6 +47,11 @@ public class VitalSignRecordRepositoryImpl implements VitalSignRecordRepository 
 
         return VitalSignRecordPersistenceAssembler.toDomainFromPersistence(savedEntity);
     }
+    @Override
+    public Optional<VitalSignRecord> findLatestByPatientId(Long patientId) {
+        return vitalSignRecordPersistenceRepository.findFirstByPatientIdOrderByRecordedAtDesc(patientId)
+                .map(VitalSignRecordPersistenceAssembler::toDomainFromPersistence);
+    }
 
     @Override
     public boolean existsById(Long id) {
