@@ -2,11 +2,14 @@ package com.brainspark.pulsereport.platform.patients.application.internal.querys
 
 import com.brainspark.pulsereport.platform.patients.application.queryservices.PatientQueryService;
 import com.brainspark.pulsereport.platform.patients.domain.model.aggregates.Patient;
+import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetAllPatientsQuery;
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetPatientByIdQuery;
 import com.brainspark.pulsereport.platform.patients.domain.repositories.PatientRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.ApplicationError;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class PatientQueryServiceImpl implements PatientQueryService {
@@ -25,5 +28,12 @@ public class PatientQueryServiceImpl implements PatientQueryService {
                         "Patient",
                         "Patient with id %s was not found.".formatted(query.patientId())
                 )));
+    }
+
+    @Override
+    public Result<List<Patient>, ApplicationError> handle(GetAllPatientsQuery query) {
+        var patients = patientRepository.findAll();
+
+        return Result.success(patients);
     }
 }
