@@ -1,47 +1,70 @@
 package com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates;
 
-import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
-import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditedEntityType;
-import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.ResponsibleUserId;
-import com.brainspark.pulsereport.platform.auditlogs.domain.model.commands.CreateAuditLogCommand;
+import com.brainspark.pulsereport.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.configuration.entities.AuditableAbstractPersistenceEntity;
-
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.commands.CreateAuditLogCommand;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditMetadata;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditedEntityType;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.jspecify.annotations.Nullable;
+
 import java.time.Instant;
-//import org.apache.logging.log4j.util.Strings;
 
-@Getter
-@NoArgsConstructor
+/**
+ * Aggregate root for the auditlogs bounded context.
+ *
+ * <p>Represents an immutable record of a clinical action. After construction via the command
+ * factory method, no state may be changed. No setters are exposed beyond those inherited from
+ * the shared persistence superclass.
+ *
+ * <p>The table name resolves to {@code audit_logs} via the snake_case pluralized naming strategy.
+ */
 @Entity
-public class AuditLog extends AuditableAbstractPersistenceEntity{
-    @Embedded
-    private ResponsibleUserId responsibleUserId;
+@Getter
+public class AuditLog extends AuditableAbstractPersistenceEntity {
+
+    /** Nullable — absent for global/non-patient-scoped actions. */
+    @Nullable
+    @Column(name = "patient_id")
+    private Long patientId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AuditedEntityType auditedEntityType;
+    @Column(nullable = false, updatable = false)
+    private AuditedEntityType entityType;
 
-    @Column(nullable = false)
-    private Long auditedEntityId;
+    @Column(nullable = false, updatable = false)
+    private String entityId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private AuditActionType actionType;
 
     @Column(nullable = false, updatable = false)
-    private Instant occurredAt;
+    private String performedBy;
 
-    @Column(length = 500)
-    private String detail;
+    @Column(nullable = false, updatable = false)
+    private Instant performedAt;
 
-    public AuditLog(CreateAuditLogCommand command) {
-        this.responsibleUserId = new ResponsibleUserId(command.responsibleUserId());
-        this.auditedEntityType = command.auditedEntityType();
-        this.auditedEntityId = command.auditedEntityId();
-        this.actionType = command.actionType();
-        this.occurredAt = command.occurredAt() != null ? command.occurredAt() : Instant.now();
-        this.detail = command.detail();
+    @Embedded
+    private AuditMetadata metadata;
+
+    protected AuditLog() {}
+
+    /**
+     * Factory method — the only valid way to create an {@link AuditLog}.
+     * Defaults {@code performedAt} to the current instant when not supplied in the command.
+     */
+    public static AuditLog create(CreateAuditLogCommand command) {
+        var entry = new AuditLog();
+        entry.patientId   = command.patientId();
+        entry.entityType  = command.entityType();
+        entry.entityId    = command.entityId();
+        entry.actionType  = command.actionType();
+        entry.performedBy = command.performedBy();
+        entry.performedAt = command.performedAt() != null ? command.performedAt() : Instant.now();
+        entry.metadata    = AuditMetadata.of(command.metadata());
+        return entry;
     }
 }
