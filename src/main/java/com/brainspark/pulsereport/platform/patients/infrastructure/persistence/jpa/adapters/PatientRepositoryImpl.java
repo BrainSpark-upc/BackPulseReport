@@ -6,6 +6,8 @@ import com.brainspark.pulsereport.platform.patients.infrastructure.persistence.j
 import com.brainspark.pulsereport.platform.patients.infrastructure.persistence.jpa.repositories.PatientPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public class PatientRepositoryImpl implements PatientRepository {
 
@@ -26,5 +28,11 @@ public class PatientRepositoryImpl implements PatientRepository {
     @Override
     public boolean existsByDocumentNumber(String documentNumber) {
         return patientPersistenceRepository.existsByDocumentNumber(documentNumber);
+    }
+
+    @Override
+    public Optional<Patient> findById(Long id) {
+        return patientPersistenceRepository.findById(id)
+                .map(PatientPersistenceAssembler::toDomainFromPersistence);
     }
 }
