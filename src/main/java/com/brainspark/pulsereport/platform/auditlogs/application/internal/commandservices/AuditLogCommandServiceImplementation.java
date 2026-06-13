@@ -1,85 +1,86 @@
 package com.brainspark.pulsereport.platform.auditlogs.application.internal.commandservices;
 
-import com.brainspark.pulsereport.platform.auditlogs.application.commandservices.AuditLogCommandService;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.commands.CreateAuditLogCommand;
+import com.brainspark.pulsereport.platform.auditlogs.domain.services.AuditLogCommandService;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.repositories.AuditLogRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.ApplicationError;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Implementation of {@link AuditLogCommandService} responsible for handling
- * creation of audit log records through command handling pattern.
+ * Command service responsible for creating and persisting {@link AuditLog} aggregates.
  *
- * <p>This service validates incoming {@link CreateAuditLogCommand} commands,
- * creates {@link AuditLog} aggregate roots, and persists them to the repository.
- * All database operations are executed within a single transactional context.
+ * <p>This application-layer service implements {@link AuditLogCommandService} and
+ * orchestrates the audit log creation workflow:
+ * <ol>
+ *   <li>Creates a new {@link AuditLog} aggregate using the domain factory method.</li>
+ *   <li>Persists the aggregate through {@link AuditLogRepository}.</li>
+ *   <li>Logs successful creation details.</li>
+ *   <li>Returns the result wrapped in a {@link Result} object.</li>
+ * </ol>
  *
- * @author BackPulse Report
+ * <p>All operations are executed within a transactional boundary to ensure
+ * consistency between aggregate creation and persistence.
+ *
+ * <p>Any unexpected exception is logged and converted into an
+ * {@link ApplicationError} failure result.
  */
 @Slf4j
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class AuditLogCommandServiceImplementation implements AuditLogCommandService {
+
+    /**
+     * Repository used to persist audit log aggregates.
+     */
     private final AuditLogRepository auditLogRepository;
 
     /**
-     * Handles the creation of a new audit log entry based on the provided command.
+     * Creates and persists a new audit log entry.
      *
-     * <p>Performs comprehensive validation of all command parameters before
-     * attempting to create and persist the audit log. Returns a {@code Result}
-     * containing either the successfully saved audit log or an application error.
+     * <p>The method delegates aggregate instantiation to
+     * {@link AuditLog#create(CreateAuditLogCommand)}, persists the resulting
+     * aggregate, and returns the persisted entity wrapped in a successful
+     * {@link Result}.
      *
-     * @param command the {@link CreateAuditLogCommand} containing audit log data
-     * @return {@code Result.success()} with persisted audit log, or
-     *         {@code Result.failure()} with validation/unexpected errors
+     * <p>If an unexpected error occurs during creation or persistence,
+     * the exception is logged and a failure {@link Result} containing an
+     * {@link ApplicationError} is returned.
+     *
+     * @param command command containing the information required to create
+     *                an audit log entry
+     * @return a successful result containing the persisted {@link AuditLog},
+     *         or a failure result containing an {@link ApplicationError}
      */
-    @Transactional
     @Override
+    @Transactional
     public Result<AuditLog, ApplicationError> handle(CreateAuditLogCommand command) {
-        // Validate responsible user ID - must be a positive number
-        if (command.responsibleUserId() == null || command.responsibleUserId() <= 0) {
-            return Result.failure(ApplicationError.validationError("responsibleUserId", "Must be a positive number"));
-        }
-
-        // Validate audited entity ID - must be a positive number
-        if(command.auditedEntityId() == null || command.auditedEntityId() <= 0) {
-            return Result.failure(ApplicationError.validationError("auditedEntityId", "Must be a positive number"));
-        }
-
-        // Validate audited entity type - must not be null
-        if(command.auditedEntityType() == null) {
-            return Result.failure(ApplicationError.validationError("auditedEntityType", "Must not be null"));
-        }
-
-        // Validate action type - must not be null
-        if (command.actionType() == null) {
-            return Result.failure(ApplicationError.validationError("actionType", "Must not be null"));
-        }
-
-        // Validate detail field - optional but must not exceed 500 characters if provided
-        if (command.detail() != null && command.detail().length() > 500) {
-            return Result.failure(ApplicationError.validationError("detail", "Must not exceed 500 characters"));
-        }
-
-        // Create, persist and return the audit log
         try {
-            var auditLog = new AuditLog(command);
-            var saved = auditLogRepository.save(auditLog);
-            log.info("AuditLog created: id={}, action={}, entity={}",
-                    saved.getId(), saved.getActionType(), saved.getAuditedEntityType());
+            AuditLog entry = AuditLog.create(command);
+            AuditLog saved = auditLogRepository.save(entry);
+
+            log.info(
+                    "Audit log entry created: id={}, action={}, entity={}/{}",
+                    saved.getId(),
+                    saved.getActionType(),
+                    saved.getEntityType(),
+                    saved.getEntityId()
+            );
+
             return Result.success(saved);
         } catch (Exception ex) {
-            // Log unexpected errors and return failure result
-            log.error("Unexpected error creating AuditLog", ex);
-            return Result.failure(ApplicationError.unexpected(
-                    "AuditLogCommandServiceImpl", ex.getMessage()));
+            log.error("Unexpected error while persisting audit log entry", ex);
+
+            return Result.failure(
+                    ApplicationError.unexpected(
+                            "AuditLogCommandService",
+                            ex.getMessage()
+                    )
+            );
         }
     }
 }
