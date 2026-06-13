@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.patients.interfaces.rest;
 
 import com.brainspark.pulsereport.platform.patients.application.commandservices.PatientCommandService;
 import com.brainspark.pulsereport.platform.patients.application.queryservices.PatientQueryService;
+import com.brainspark.pulsereport.platform.patients.domain.model.commands.DeletePatientCommand;
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetAllPatientsQuery;
 import com.brainspark.pulsereport.platform.patients.domain.model.queries.GetPatientByIdQuery;
 import com.brainspark.pulsereport.platform.patients.interfaces.rest.resources.CreatePatientResource;
@@ -84,6 +85,18 @@ public class PatientsController {
                 result,
                 PatientResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK
+        );
+    }
+
+    @DeleteMapping("/{patientId}")
+    public ResponseEntity<?> deletePatient(@PathVariable Long patientId) {
+        var command = new DeletePatientCommand(patientId);
+        var result = patientCommandService.handle(command);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                ignored -> null,
+                HttpStatus.NO_CONTENT
         );
     }
 }

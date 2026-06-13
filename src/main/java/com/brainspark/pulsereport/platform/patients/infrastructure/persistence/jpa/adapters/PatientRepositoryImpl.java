@@ -44,4 +44,9 @@ public class PatientRepositoryImpl implements PatientRepository {
                 .map(PatientPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
+
+    @Override
+    public void deleteById(Long id) {
+        patientPersistenceRepository.deleteById(id);
+    }
 }
