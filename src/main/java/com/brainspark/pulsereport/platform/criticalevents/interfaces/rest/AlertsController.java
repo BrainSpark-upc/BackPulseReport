@@ -5,9 +5,11 @@ import com.brainspark.pulsereport.platform.criticalevents.application.queryservi
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertByIdQuery;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAllAlertsQuery;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.AttendAlertResource;
+import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.CloseAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.CreateAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.AlertResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.AttendAlertCommandFromResourceAssembler;
+import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.CloseAlertCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.CreateAlertCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -78,6 +80,21 @@ public class AlertsController {
             @RequestBody @Valid AttendAlertResource resource
     ) {
         var command = AttendAlertCommandFromResourceAssembler.toCommandFromResource(alertId, resource);
+        var result = alertCommandService.handle(command);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                AlertResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PatchMapping(value = "/{alertId}/close", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> closeAlert(
+            @PathVariable Long alertId,
+            @RequestBody @Valid CloseAlertResource resource
+    ) {
+        var command = CloseAlertCommandFromResourceAssembler.toCommandFromResource(alertId, resource);
         var result = alertCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
