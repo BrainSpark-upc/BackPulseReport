@@ -14,6 +14,7 @@ public final class HandoverPersistenceAssembler {
 
         var handover = new Handover();
         handover.setId(entity.getId());
+        handover.setPatientId(entity.getPatientId());
         handover.setTitle(entity.getTitle());
         handover.setDescription(entity.getDescription());
         handover.setStatus(entity.getStatus());
@@ -29,6 +30,7 @@ public final class HandoverPersistenceAssembler {
         if (handover.getId() != null) {
             entity.setId(handover.getId());
         }
+        entity.setPatientId(handover.getPatientId());
         entity.setTitle(handover.getTitle());
         entity.setDescription(handover.getDescription());
         entity.setStatus(handover.getStatus());

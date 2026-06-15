@@ -4,6 +4,8 @@ import com.brainspark.pulsereport.platform.handover.infrastructure.persistence.j
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -11,4 +13,7 @@ public interface HandoverPersistenceRepository extends JpaRepository<HandoverPer
     Optional<HandoverPersistenceEntity> findByTitle(String title);
 
     boolean existsByTitle(String title);
+
+    List<HandoverPersistenceEntity> findByPatientId(Long patientId);
+    List<HandoverPersistenceEntity> findByPatientIdAndCreatedAtBetween(Long patientId, Date startDate, Date endDate);
 }

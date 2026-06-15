@@ -6,9 +6,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(
         name = "CreateHandoverRequest",
         description = "Request payload for creating a new handover",
-        example = "{\"title\": \"Night Shift Handover\", \"description\": \"Pending tasks and key updates for the next shift\"}"
+        example = "{\"patientId\": 1, \"title\": \"Night Shift Handover\", \"description\": \"Pending tasks and key updates for the next shift\"}"
 )
 public record CreateHandoverResource(
+        @Schema(
+                description = "Patient ID associated with the handover",
+                example = "1"
+        )
+        Long patientId,
+
         @Schema(
                 description = "Handover title",
                 example = "Night Shift Handover",
@@ -27,6 +33,9 @@ public record CreateHandoverResource(
 ) {
 
     public CreateHandoverResource {
+        if (patientId == null) {
+            throw new IllegalArgumentException("Patient ID is required");
+        }
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("Title is required");
         }

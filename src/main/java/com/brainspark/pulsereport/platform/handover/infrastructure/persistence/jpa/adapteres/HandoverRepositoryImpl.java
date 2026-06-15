@@ -6,6 +6,7 @@ import com.brainspark.pulsereport.platform.handover.infrastructure.persistence.j
 import com.brainspark.pulsereport.platform.handover.infrastructure.persistence.jpa.repositories.HandoverPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,6 +32,16 @@ public class HandoverRepositoryImpl implements HandoverRepository {
     @Override
     public Optional<Handover> findByTitle(String title) {
         return handoverPersistenceRepository.findByTitle(title).map(HandoverPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public List<Handover> findByPatientId(Long patientId) {
+        return handoverPersistenceRepository.findByPatientId(patientId).stream().map(HandoverPersistenceAssembler::toDomainFromPersistence).toList();
+    }
+
+    @Override
+    public List<Handover> findByPatientIdAndDateRange(Long patientId, Date startDate, Date endDate) {
+        return handoverPersistenceRepository.findByPatientIdAndCreatedAtBetween(patientId, startDate, endDate).stream().map(HandoverPersistenceAssembler::toDomainFromPersistence).toList();
     }
 
     @Override
