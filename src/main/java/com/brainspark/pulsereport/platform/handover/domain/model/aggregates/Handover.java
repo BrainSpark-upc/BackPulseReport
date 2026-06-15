@@ -14,6 +14,9 @@ public class Handover extends AbstractDomainAggregateRoot<Handover> {
     private Long id;
 
     @Setter
+    private Long patientId;
+
+    @Setter
     private String title;
 
     @Setter
@@ -31,6 +34,7 @@ public class Handover extends AbstractDomainAggregateRoot<Handover> {
 
 
     public Handover(CreateHandoverCommand command) {
+        this.patientId = command.patientId();
         this.title = command.title();
         this.description = command.description();
         this.status = HandoverStatus.PENDING;
