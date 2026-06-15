@@ -18,6 +18,8 @@ public final class HandoverPersistenceAssembler {
         handover.setTitle(entity.getTitle());
         handover.setDescription(entity.getDescription());
         handover.setStatus(entity.getStatus());
+        handover.setIncomingNurseId(entity.getIncomingNurseId());
+        handover.setAdditionalNotes(entity.getAdditionalNotes());
         return handover;
     }
 
@@ -34,6 +36,8 @@ public final class HandoverPersistenceAssembler {
         entity.setTitle(handover.getTitle());
         entity.setDescription(handover.getDescription());
         entity.setStatus(handover.getStatus());
+        entity.setIncomingNurseId(handover.getIncomingNurseId());
+        entity.setAdditionalNotes(handover.getAdditionalNotes());
         return entity;
     }
 }

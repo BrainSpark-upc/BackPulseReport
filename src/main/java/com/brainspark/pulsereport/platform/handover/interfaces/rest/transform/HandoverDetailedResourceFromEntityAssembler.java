@@ -11,7 +11,9 @@ public class HandoverDetailedResourceFromEntityAssembler {
                 entity.getPatientId(),
                 entity.getTitle(),
                 entity.getDescription(),
-                entity.getStatus().name()
+                entity.getStatus().name(),
+                entity.getIncomingNurseId(),
+                entity.getAdditionalNotes()
         );
     }
 }
