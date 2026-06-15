@@ -15,8 +15,8 @@ import java.time.Instant;
  * @param entityId nullable -> restrict results to a specific audited entity instance
  * @param actionType nullable -> restrict results to a specific action type
  * @param performedBy nullable -> restrict results to actions performed by a specific actor
- * @param from nullable -> lower bound on the performedAt timestamp of results
- * @param to nullable -> upper bound on the performedAt timestamp of results
+ * @param from nullable -> returns entries whose {@code performedAt} is greater than or equal to this value
+ * @param to nullable -> returns entries whose {@code performedAt} is less than or equal to this value
  * @param page zero based page index. Defaults to 0 when null
  * @param size page size. Defaults to 20 when null
  */
