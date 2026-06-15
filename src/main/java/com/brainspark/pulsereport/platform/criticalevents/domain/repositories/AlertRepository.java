@@ -12,4 +12,6 @@ public interface AlertRepository {
     Optional<Alert> findById(Long id);
 
     List<Alert> findAll();
+
+    List<Alert> findByPatientId(Long patientId);
 }

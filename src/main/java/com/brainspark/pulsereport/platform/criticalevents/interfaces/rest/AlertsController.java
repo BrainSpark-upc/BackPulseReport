@@ -3,6 +3,7 @@ package com.brainspark.pulsereport.platform.criticalevents.interfaces.rest;
 import com.brainspark.pulsereport.platform.criticalevents.application.commandservices.AlertCommandService;
 import com.brainspark.pulsereport.platform.criticalevents.application.queryservices.AlertQueryService;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertByIdQuery;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAllAlertsQuery;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.AttendAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.CloseAlertResource;
@@ -51,6 +52,20 @@ public class AlertsController {
     @GetMapping
     public ResponseEntity<?> getAllAlerts() {
         var query = new GetAllAlertsQuery();
+        var result = alertQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                alerts -> alerts.stream()
+                        .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
+                        .toList(),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/patients/{patientId}")
+    public ResponseEntity<?> getAlertsByPatientId(@PathVariable Long patientId) {
+        var query = new GetAlertsByPatientIdQuery(patientId);
         var result = alertQueryService.handle(query);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
