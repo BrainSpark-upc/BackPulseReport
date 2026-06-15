@@ -1,4 +1,4 @@
-package com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.configuration.entities;
+package com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.entities;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -46,51 +46,18 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class AuditableAbstractPersistenceEntity {
 
-    /**
-     * Primary key of the entity.
-     *
-     * This field serves as the unique identifier for each entity record in the database.
-     * It is automatically generated using an identity strategy (auto-increment in most databases).
-     *
-     */
+
     @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Timestamp of when this entity was first created/persisted.
-     *
-     * This field is automatically populated by Spring Data's {@link AuditingEntityListener}
-     * during the initial persistence of an entity. The timestamp is captured at the moment
-     * of insertion and represents the creation time of the record.
-     *
-     * Constraints:
-     * - Cannot be null (nullable = false)
-     * - Cannot be updated after initial creation (updatable = false)
-     * - Read-only to prevent manual modification
-     */
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Date createdAt;
 
-    /**
-     * Timestamp of when this entity was last modified.
-     *
-     * This field is automatically updated by Spring Data's {@link AuditingEntityListener}
-     * whenever the entity is modified and persisted. It tracks the most recent change
-     * to any field of the entity.
-     *
-     * Note:
-     * Initially, this timestamp is set to the same value as {@link #createdAt} during
-     * the initial creation of the entity. Subsequent updates to the entity will refresh
-     * this timestamp to reflect the current modification time.
-     *
-     * Constraints:
-     * - Cannot be null (nullable = false)
-     * - Can be updated on every modification (updatable = true by default)
-     * - Read-only to prevent manual modification
-     */
+
     @LastModifiedDate
     @Column(nullable = false)
     private Date updateAt;
