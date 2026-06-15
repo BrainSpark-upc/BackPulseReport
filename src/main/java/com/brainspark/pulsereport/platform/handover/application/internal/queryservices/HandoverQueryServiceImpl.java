@@ -22,7 +22,7 @@ public class HandoverQueryServiceImpl implements HandoverQueryService {
 
     @Override
     public Optional<Handover> handle(GetHandoverByIdQuery query) {
-        return handoverRepository.findById(query.id());
+        return handoverRepository.findById(query.handoverId());
     }
 
     @Override
