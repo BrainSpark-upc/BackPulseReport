@@ -6,6 +6,9 @@ import com.brainspark.pulsereport.platform.criticalevents.infrastructure.persist
 import com.brainspark.pulsereport.platform.criticalevents.infrastructure.persistence.jpa.repositories.AlertPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
 @Repository
 public class AlertRepositoryImpl implements AlertRepository {
 
@@ -21,5 +24,19 @@ public class AlertRepositoryImpl implements AlertRepository {
         var savedEntity = alertPersistenceRepository.save(entity);
 
         return AlertPersistenceAssembler.toDomainFromPersistence(savedEntity);
+    }
+
+    @Override
+    public Optional<Alert> findById(Long id) {
+        return alertPersistenceRepository.findById(id)
+                .map(AlertPersistenceAssembler::toDomainFromPersistence);
+    }
+
+    @Override
+    public List<Alert> findAll() {
+        return alertPersistenceRepository.findAll()
+                .stream()
+                .map(AlertPersistenceAssembler::toDomainFromPersistence)
+                .toList();
     }
 }
