@@ -11,4 +11,5 @@ public interface HandoverQueryService {
 
     Optional<Handover> handle(GetHandoverByIdQuery query);
     List<Handover> handle(GetAllHandoversQuery query);
+    List<Handover> handle(com.brainspark.pulsereport.platform.handover.domain.model.queries.GetAllHandoversByPatientIdQuery query);
 }

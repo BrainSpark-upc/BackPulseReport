@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,5 +73,33 @@ public class HandoversController {
                 id -> id,
                 HttpStatus.CREATED
         );
+    }
+
+    /**
+     * Get handovers by patient ID
+     *
+     * @param patientId The patient ID
+     * @param startDate Optional start date for filtering (YYYY-MM-DD)
+     * @param endDate   Optional end date for filtering (YYYY-MM-DD)
+     * @return List of {@link HandoverResource}
+     */
+    @GetMapping("/patients/{patientId}")
+    @Operation(summary = "Get handovers by patient ID", description = "Gets all handovers for a specific patient, with optional date filtering.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Handovers retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = HandoverResource.class))
+            )
+    })
+    public ResponseEntity<java.util.List<HandoverResource>> getHandoversByPatientId(
+            @org.springframework.web.bind.annotation.PathVariable Long patientId,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.util.Date startDate,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.util.Date endDate) {
+        
+        var query = new com.brainspark.pulsereport.platform.handover.domain.model.queries.GetAllHandoversByPatientIdQuery(patientId, startDate, endDate);
+        var handovers = handoverQueryService.handle(query);
+        var resources = handovers.stream().map(HandoverResourceFromEntityAssembler::toResourceFromEntity).toList();
+        return ResponseEntity.ok(resources);
     }
 }

@@ -7,6 +7,6 @@ import com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.Cr
 public class CreateHandoverCommandFromResourceAssembler {
 
     public static CreateHandoverCommand toCommandFromResource(CreateHandoverResource resource) {
-        return new CreateHandoverCommand(resource.title(), resource.description());
+        return new CreateHandoverCommand(resource.patientId(), resource.title(), resource.description());
     }
 }

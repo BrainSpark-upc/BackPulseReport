@@ -9,6 +9,7 @@ public class HandoverResourceFromEntityAssembler {
     public static HandoverResource toResourceFromEntity(Handover entity) {
         return new HandoverResource(
                 entity.getId(),
+                entity.getPatientId(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getStatus().name());
