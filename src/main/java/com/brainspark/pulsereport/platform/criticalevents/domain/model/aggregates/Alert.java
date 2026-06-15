@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.criticalevents.domain.model.aggregat
 
 import com.brainspark.pulsereport.platform.criticalevents.domain.exceptions.InvalidAlertException;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.AttendAlertCommand;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.CloseAlertCommand;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.CreateAlertCommand;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertSeverity;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertStatus;
@@ -91,6 +92,30 @@ public class Alert extends AbstractDomainAggregateRoot<Alert> {
         this.attendedBy = command.attendedBy().trim();
         this.attendedAt = LocalDateTime.now();
         this.status = AlertStatus.ATTENDED;
+    }
+
+    /**
+     * Cierra la alerta.
+     * Regla de negocio: se puede cerrar una alerta OPEN o ATTENDED,
+     * pero nunca una que ya esté CLOSED.
+     */
+    public void close(CloseAlertCommand command) {
+        if (command.closedBy() == null || command.closedBy().isBlank()) {
+            throw new InvalidAlertException("Closed by is required");
+        }
+
+        if (command.resolutionNotes() == null || command.resolutionNotes().isBlank()) {
+            throw new InvalidAlertException("Resolution notes are required");
+        }
+
+        if (this.status == AlertStatus.CLOSED) {
+            throw new InvalidAlertException("Alert is already closed");
+        }
+
+        this.closedBy = command.closedBy().trim();
+        this.resolutionNotes = command.resolutionNotes().trim();
+        this.closedAt = LocalDateTime.now();
+        this.status = AlertStatus.CLOSED;
     }
 
     private void validate(CreateAlertCommand command) {
