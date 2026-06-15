@@ -1,0 +1,127 @@
+package com.brainspark.pulsereport.platform.criticalevents.domain.model.aggregates;
+
+import com.brainspark.pulsereport.platform.criticalevents.domain.exceptions.InvalidAlertException;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.CreateAlertCommand;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertSeverity;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertStatus;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertType;
+import com.brainspark.pulsereport.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+@Getter
+public class Alert extends AbstractDomainAggregateRoot<Alert> {
+
+    @Setter
+    private Long id;
+
+    private Long patientId;
+    private AlertType type;
+    private AlertSeverity severity;
+    private String description;
+    private AlertStatus status;
+    private String triggeredBy;
+
+    private String attendedBy;
+    private LocalDateTime attendedAt;
+
+    private String closedBy;
+    private String resolutionNotes;
+    private LocalDateTime closedAt;
+
+    public Alert() {
+    }
+
+    public Alert(CreateAlertCommand command) {
+        validate(command);
+
+        this.patientId = command.patientId();
+        this.type = command.type();
+        this.severity = command.severity();
+        this.description = command.description().trim();
+        this.triggeredBy = command.triggeredBy().trim();
+        this.status = AlertStatus.OPEN;
+    }
+
+    private Alert(
+            Long id,
+            Long patientId,
+            AlertType type,
+            AlertSeverity severity,
+            String description,
+            AlertStatus status,
+            String triggeredBy,
+            String attendedBy,
+            LocalDateTime attendedAt,
+            String closedBy,
+            String resolutionNotes,
+            LocalDateTime closedAt
+    ) {
+        this.id = id;
+        this.patientId = patientId;
+        this.type = type;
+        this.severity = severity;
+        this.description = description;
+        this.status = status;
+        this.triggeredBy = triggeredBy;
+        this.attendedBy = attendedBy;
+        this.attendedAt = attendedAt;
+        this.closedBy = closedBy;
+        this.resolutionNotes = resolutionNotes;
+        this.closedAt = closedAt;
+    }
+
+    private void validate(CreateAlertCommand command) {
+        if (command.patientId() == null || command.patientId() <= 0) {
+            throw new InvalidAlertException("Patient id is required");
+        }
+
+        if (command.type() == null) {
+            throw new InvalidAlertException("Type is required");
+        }
+
+        if (command.severity() == null) {
+            throw new InvalidAlertException("Severity is required");
+        }
+
+        if (command.description() == null || command.description().isBlank()) {
+            throw new InvalidAlertException("Description is required");
+        }
+
+        if (command.triggeredBy() == null || command.triggeredBy().isBlank()) {
+            throw new InvalidAlertException("Triggered by is required");
+        }
+    }
+
+    public static Alert reconstitute(
+            Long id,
+            Long patientId,
+            AlertType type,
+            AlertSeverity severity,
+            String description,
+            AlertStatus status,
+            String triggeredBy,
+            String attendedBy,
+            LocalDateTime attendedAt,
+            String closedBy,
+            String resolutionNotes,
+            LocalDateTime closedAt
+    ) {
+        return new Alert(
+                id,
+                patientId,
+                type,
+                severity,
+                description,
+                status,
+                triggeredBy,
+                attendedBy,
+                attendedAt,
+                closedBy,
+                resolutionNotes,
+                closedAt
+        );
+    }
+}
