@@ -4,8 +4,10 @@ import com.brainspark.pulsereport.platform.criticalevents.application.commandser
 import com.brainspark.pulsereport.platform.criticalevents.application.queryservices.AlertQueryService;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertByIdQuery;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAllAlertsQuery;
+import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.AttendAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.CreateAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.AlertResourceFromEntityAssembler;
+import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.AttendAlertCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.CreateAlertCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,6 +64,21 @@ public class AlertsController {
     public ResponseEntity<?> getAlertById(@PathVariable Long alertId) {
         var query = new GetAlertByIdQuery(alertId);
         var result = alertQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                AlertResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
+        );
+    }
+
+    @PatchMapping(value = "/{alertId}/attend", consumes = APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> attendAlert(
+            @PathVariable Long alertId,
+            @RequestBody @Valid AttendAlertResource resource
+    ) {
+        var command = AttendAlertCommandFromResourceAssembler.toCommandFromResource(alertId, resource);
+        var result = alertCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,

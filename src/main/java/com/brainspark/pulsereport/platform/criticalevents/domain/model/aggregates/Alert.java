@@ -1,6 +1,7 @@
 package com.brainspark.pulsereport.platform.criticalevents.domain.model.aggregates;
 
 import com.brainspark.pulsereport.platform.criticalevents.domain.exceptions.InvalidAlertException;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.AttendAlertCommand;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.commands.CreateAlertCommand;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertSeverity;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.valueobjects.AlertStatus;
@@ -71,6 +72,25 @@ public class Alert extends AbstractDomainAggregateRoot<Alert> {
         this.closedBy = closedBy;
         this.resolutionNotes = resolutionNotes;
         this.closedAt = closedAt;
+    }
+
+    /**
+     * Marca la alerta como atendida.
+     * Regla de negocio: solo una alerta OPEN puede ser atendida.
+     */
+    public void attend(AttendAlertCommand command) {
+        if (command.attendedBy() == null || command.attendedBy().isBlank()) {
+            throw new InvalidAlertException("Attended by is required");
+        }
+
+        if (this.status != AlertStatus.OPEN) {
+            throw new InvalidAlertException(
+                    "Only an OPEN alert can be attended (current status: %s)".formatted(this.status));
+        }
+
+        this.attendedBy = command.attendedBy().trim();
+        this.attendedAt = LocalDateTime.now();
+        this.status = AlertStatus.ATTENDED;
     }
 
     private void validate(CreateAlertCommand command) {
