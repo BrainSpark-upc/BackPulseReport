@@ -1,7 +1,7 @@
 package com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates;
 
 import com.brainspark.pulsereport.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
-import com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.configuration.entities.AuditableAbstractPersistenceEntity;
+import com.brainspark.pulsereport.platform.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.commands.CreateAuditLogCommand;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditMetadata;
