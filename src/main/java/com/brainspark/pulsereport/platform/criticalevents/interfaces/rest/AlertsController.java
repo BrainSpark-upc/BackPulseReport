@@ -1,6 +1,9 @@
 package com.brainspark.pulsereport.platform.criticalevents.interfaces.rest;
 
 import com.brainspark.pulsereport.platform.criticalevents.application.commandservices.AlertCommandService;
+import com.brainspark.pulsereport.platform.criticalevents.application.queryservices.AlertQueryService;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertByIdQuery;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAllAlertsQuery;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.resources.CreateAlertResource;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.AlertResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.criticalevents.interfaces.rest.transform.CreateAlertCommandFromResourceAssembler;
@@ -19,9 +22,14 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class AlertsController {
 
     private final AlertCommandService alertCommandService;
+    private final AlertQueryService alertQueryService;
 
-    public AlertsController(AlertCommandService alertCommandService) {
+    public AlertsController(
+            AlertCommandService alertCommandService,
+            AlertQueryService alertQueryService
+    ) {
         this.alertCommandService = alertCommandService;
+        this.alertQueryService = alertQueryService;
     }
 
     @PostMapping(consumes = APPLICATION_JSON_VALUE)
@@ -33,6 +41,32 @@ public class AlertsController {
                 result,
                 AlertResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.CREATED
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllAlerts() {
+        var query = new GetAllAlertsQuery();
+        var result = alertQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                alerts -> alerts.stream()
+                        .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
+                        .toList(),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/{alertId}")
+    public ResponseEntity<?> getAlertById(@PathVariable Long alertId) {
+        var query = new GetAlertByIdQuery(alertId);
+        var result = alertQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                AlertResourceFromEntityAssembler::toResourceFromEntity,
+                HttpStatus.OK
         );
     }
 }
