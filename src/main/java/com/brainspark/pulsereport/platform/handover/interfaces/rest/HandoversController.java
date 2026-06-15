@@ -102,4 +102,34 @@ public class HandoversController {
         var resources = handovers.stream().map(HandoverResourceFromEntityAssembler::toResourceFromEntity).toList();
         return ResponseEntity.ok(resources);
     }
+
+    /**
+     * Get a specific handover by its ID
+     *
+     * @param handoverId The handover ID
+     * @return The detailed {@link com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.HandoverDetailedResource}
+     */
+    @GetMapping("/{handoverId}")
+    @Operation(summary = "Get specific handover details", description = "Gets the complete information of a particular SBAR handover.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Handover details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.HandoverDetailedResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Handover not found")
+    })
+    public ResponseEntity<com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.HandoverDetailedResource> getHandoverById(
+            @org.springframework.web.bind.annotation.PathVariable Long handoverId) {
+
+        var query = new GetHandoverByIdQuery(handoverId);
+        var handover = handoverQueryService.handle(query);
+
+        if (handover.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var resource = com.brainspark.pulsereport.platform.handover.interfaces.rest.transform.HandoverDetailedResourceFromEntityAssembler.toResourceFromEntity(handover.get());
+        return ResponseEntity.ok(resource);
+    }
 }
