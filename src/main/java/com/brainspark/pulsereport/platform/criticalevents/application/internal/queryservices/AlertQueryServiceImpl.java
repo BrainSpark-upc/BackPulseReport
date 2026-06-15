@@ -3,6 +3,7 @@ package com.brainspark.pulsereport.platform.criticalevents.application.internal.
 import com.brainspark.pulsereport.platform.criticalevents.application.queryservices.AlertQueryService;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.aggregates.Alert;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertByIdQuery;
+import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAlertsByPatientIdQuery;
 import com.brainspark.pulsereport.platform.criticalevents.domain.model.queries.GetAllAlertsQuery;
 import com.brainspark.pulsereport.platform.criticalevents.domain.repositories.AlertRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.ApplicationError;
@@ -33,6 +34,13 @@ public class AlertQueryServiceImpl implements AlertQueryService {
     @Override
     public Result<List<Alert>, ApplicationError> handle(GetAllAlertsQuery query) {
         var alerts = alertRepository.findAll();
+
+        return Result.success(alerts);
+    }
+
+    @Override
+    public Result<List<Alert>, ApplicationError> handle(GetAlertsByPatientIdQuery query) {
+        var alerts = alertRepository.findByPatientId(query.patientId());
 
         return Result.success(alerts);
     }

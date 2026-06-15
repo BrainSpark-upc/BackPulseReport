@@ -39,4 +39,12 @@ public class AlertRepositoryImpl implements AlertRepository {
                 .map(AlertPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
+
+    @Override
+    public List<Alert> findByPatientId(Long patientId) {
+        return alertPersistenceRepository.findByPatientId(patientId)
+                .stream()
+                .map(AlertPersistenceAssembler::toDomainFromPersistence)
+                .toList();
+    }
 }
