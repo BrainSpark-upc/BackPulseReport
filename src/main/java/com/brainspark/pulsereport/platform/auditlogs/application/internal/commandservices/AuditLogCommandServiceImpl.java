@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuditLogCommandServiceImplementation implements AuditLogCommandService {
+public class AuditLogCommandServiceImpl implements AuditLogCommandService {
 
     /**
      * Repository used to persist audit log aggregates.
