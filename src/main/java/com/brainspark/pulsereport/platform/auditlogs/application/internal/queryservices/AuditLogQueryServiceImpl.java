@@ -3,6 +3,7 @@ package com.brainspark.pulsereport.platform.auditlogs.application.internal.query
 import com.brainspark.pulsereport.platform.auditlogs.application.queryservices.AuditLogQueryService;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.assemblers.AuditLogSpecificationAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.repositories.AuditLogRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
@@ -20,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuditLogQueryServiceImplementation implements AuditLogQueryService {
+public class AuditLogQueryServiceImpl implements AuditLogQueryService {
     private final AuditLogRepository auditLogRepository;
 
     @Override
@@ -40,5 +41,13 @@ public class AuditLogQueryServiceImplementation implements AuditLogQueryService 
             return Result.failure(ApplicationError.unexpected("AuditLogQueryService", ex.getMessage())
             );
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Result<AuditLog, ApplicationError> handle(GetAuditLogByIdQuery query){
+        return auditLogRepository.findById(query.auditLogId()).<Result<AuditLog, ApplicationError>>map(Result::success)
+                .orElseGet(() -> Result.failure(ApplicationError.notFound("AuditLog", query.auditLogId().toString()
+                )));
     }
 }

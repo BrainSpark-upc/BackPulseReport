@@ -2,15 +2,17 @@ package com.brainspark.pulsereport.platform.auditlogs.interfaces.REST;
 
 import com.brainspark.pulsereport.platform.auditlogs.domain.services.AuditLogCommandService;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditedEntityType;
-import com.brainspark.pulsereport.platform.auditlogs.domain.services.AuditLogCommandService;
+import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogDetailResource;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogResource;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.CreateAuditLogResource;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogFilterResource;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.PagedResult;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.CreateAuditLogCommandFromResourceAssembler;
+import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogDetailResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.application.queryservices.AuditLogQueryService;
 
@@ -39,7 +41,7 @@ import java.time.Instant;
 @RestController
 @RequestMapping(value = "/api/v1/audit-logs", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
-@Tag(name = "Audit Logs", description = "Clinical traceability (append-only audit trail)")
+@Tag(name = "Audit Logs", description = "Clinical traceability endpoints (append-only audit trail)")
 public class AuditLogsController {
 
     private final AuditLogCommandService auditLogCommandService;
@@ -123,6 +125,34 @@ public class AuditLogsController {
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
                 resultPage -> PagedResult.from(resultPage, AuditLogResourceFromEntityAssembler::toResourceFromEntity),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/{auditLogId}")
+    @Operation(
+            summary = "Get audit log entry detail",
+            description = "Returns the full detail of a single audit log entry by its identifier. " +
+                    "This is intended for navigation from a patient view, entity history, or dashboard drill-down."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Audit log entry detail",
+                    content = @Content(schema = @Schema(implementation = AuditLogDetailResource.class))),
+            @ApiResponse(responseCode = "404", description = "Audit log entry not found",
+                    content = @Content),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error",
+                    content = @Content)
+    })
+    public ResponseEntity<?> getAuditLogById(
+            @Parameter(description = "Identifier of the audit log entry", example = "1")
+            @PathVariable Long auditLogId
+    ) {
+        var query = new GetAuditLogByIdQuery(auditLogId);
+        var result = auditLogQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                AuditLogDetailResourceFromEntityAssembler::toResourceFromEntity,
                 HttpStatus.OK
         );
     }
