@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Command service responsible for creating and persisting {@link AuditLog} aggregates.
  *
- * <p>This application-layer service implements {@link AuditLogCommandService} and
+ * This application-layer service implements {@link AuditLogCommandService} and
  * orchestrates the audit log creation workflow:
  * <ol>
  *   <li>Creates a new {@link AuditLog} aggregate using the domain factory method.</li>
@@ -23,11 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
  *   <li>Returns the result wrapped in a {@link Result} object.</li>
  * </ol>
  *
- * <p>All operations are executed within a transactional boundary to ensure
+ * All operations are executed within a transactional boundary to ensure
  * consistency between aggregate creation and persistence.
  *
- * <p>Any unexpected exception is logged and converted into an
- * {@link ApplicationError} failure result.
+ * Any unexpected exception is logged and converted into an {@link ApplicationError} failure result.
  */
 @Slf4j
 @Service
@@ -42,14 +41,12 @@ public class AuditLogCommandServiceImpl implements AuditLogCommandService {
     /**
      * Creates and persists a new audit log entry.
      *
-     * <p>The method delegates aggregate instantiation to
-     * {@link AuditLog#create(CreateAuditLogCommand)}, persists the resulting
+     * The method delegates aggregate instantiation to {@link AuditLog#create(CreateAuditLogCommand)}, persists the resulting
      * aggregate, and returns the persisted entity wrapped in a successful
      * {@link Result}.
      *
-     * <p>If an unexpected error occurs during creation or persistence,
-     * the exception is logged and a failure {@link Result} containing an
-     * {@link ApplicationError} is returned.
+     * If an unexpected error occurs during creation or persistence,
+     * the exception is logged and a failure {@link Result} containing an {@link ApplicationError} is returned.
      *
      * @param command command containing the information required to create
      *                an audit log entry

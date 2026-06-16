@@ -15,11 +15,10 @@ import java.time.Instant;
 /**
  * Aggregate root for the auditlogs bounded context.
  *
- * <p>Represents an immutable record of a clinical action. After construction via the command
- * factory method, no state may be changed. No setters are exposed beyond those inherited from
+ * Represents an immutable record of a clinical action. After construction via the command factory method, no state may be changed. No setters are exposed beyond those inherited from
  * the shared persistence superclass.
  *
- * <p>The table name resolves to {@code audit_logs} via the snake_case pluralized naming strategy.
+ * The table name resolves to {@code audit_logs} via the snake_case pluralized naming strategy.
  */
 @Entity
 @Getter
