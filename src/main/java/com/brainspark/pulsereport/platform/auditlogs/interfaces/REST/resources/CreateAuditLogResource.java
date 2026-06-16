@@ -47,7 +47,7 @@ public record CreateAuditLogResource(
         String performedBy,
 
         @Nullable
-        @Schema(description = "Instant the action occurred (ISO-8601). Defaults to server time when absent.",
+        @Schema(description = "Instant the action occurred (using ISO-8601). Defaults to server time when absent.",
                 example = "2026-03-01T14:30:00Z")
         Instant performedAt,
         /*

@@ -4,6 +4,7 @@ import com.brainspark.pulsereport.platform.auditlogs.application.queryservices.A
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetPatientAuditTimelineQuery;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.assemblers.AuditLogSpecificationAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.repositories.AuditLogRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
@@ -17,6 +18,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -49,5 +53,19 @@ public class AuditLogQueryServiceImpl implements AuditLogQueryService {
         return auditLogRepository.findById(query.auditLogId()).<Result<AuditLog, ApplicationError>>map(Result::success)
                 .orElseGet(() -> Result.failure(ApplicationError.notFound("AuditLog", query.auditLogId().toString()
                 )));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Result<List<AuditLog>, ApplicationError> handle(GetPatientAuditTimelineQuery query) {
+        try {
+            Specification<AuditLog> spec = AuditLogSpecificationAssembler.fromPatientTimelineQuery(query);
+            Sort chronological = Sort.by(Sort.Direction.ASC, "performedAt");
+            List<AuditLog> events = auditLogRepository.findAll(spec, chronological);
+            return Result.success(events);
+        } catch (Exception ex) {
+            log.error("Unexpected error while building patient audit timeline for patient id={}", query.patientId(), ex);
+            return Result.failure(ApplicationError.unexpected("AuditLogQueryService", ex.getMessage()));
+        }
     }
 }
