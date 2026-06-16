@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(
         name = "HandoverDetailedResponse",
         description = "Detailed handover information response, including complete SBAR content if available",
-        example = "{\"id\": 1, \"patientId\": 1, \"title\": \"Night Shift Handover\", \"description\": \"Situation: Patient stable... Background: admitted for... Assessment: ... Recommendation: ...\", \"status\": \"PENDING\"}"
+        example = "{\"id\": 1, \"patientId\": 1, \"title\": \"Night Shift Handover\", \"description\": \"Situation: Patient stable... Background: admitted for... Assessment: ... Recommendation: ...\", \"status\": \"PENDING\", \"incomingNurseId\": 2, \"additionalNotes\": \"Notes\"}"
 )
 public record HandoverDetailedResource(
         @Schema(description = "Handover unique identifier", example = "1")
@@ -21,6 +21,12 @@ public record HandoverDetailedResource(
         String description,
 
         @Schema(description = "Handover status", example = "PENDING")
-        String status
+        String status,
+
+        @Schema(description = "Nurse ID acknowledging the handover", example = "2")
+        Long incomingNurseId,
+
+        @Schema(description = "Optional additional notes", example = "Notes")
+        String additionalNotes
 ) {
 }

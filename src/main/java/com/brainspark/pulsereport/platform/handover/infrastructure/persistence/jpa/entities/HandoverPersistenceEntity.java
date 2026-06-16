@@ -27,4 +27,10 @@ public class HandoverPersistenceEntity extends AuditableAbstractPersistenceEntit
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private HandoverStatus status;
+
+    @Column(name = "incoming_nurse_id")
+    private Long incomingNurseId;
+
+    @Column(name = "additional_notes")
+    private String additionalNotes;
 }
