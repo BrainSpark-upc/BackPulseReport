@@ -5,16 +5,15 @@ import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAud
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditedEntityType;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogDetailResource;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogResource;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.CreateAuditLogResource;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.AuditLogFilterResource;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.PagedResult;
+import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.*;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.CreateAuditLogCommandFromResourceAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogDetailResourceFromEntityAssembler;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.application.queryservices.AuditLogQueryService;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetPatientAuditTimelineQuery;
+import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogTimelineItemResourceFromEntityAssembler;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +33,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * REST controller for the auditlogs bounded context.
@@ -102,7 +102,7 @@ public class AuditLogsController {
             @Parameter(description = "Filter by the staff member who performed the action", example = "nurse-user-31")
             @RequestParam(required = false) @Nullable String performedBy,
 
-            @Parameter(description = "Inclusive lower bound for performedAt", example = "2026-02-14T00:00:00Z")
+            @Parameter(description = "Inclusive lower bound for performedAt", example = "2026-01-01T00:00:00Z")
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Nullable Instant from,
 
@@ -157,6 +157,40 @@ public class AuditLogsController {
         );
     }
 
+    @GetMapping(value= "/api/v1/patients/{patientId}/audit-logs/timeline", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary="Get patient audit timeline", description = "Returns the full chronological audit trail for a specific patient. " +
+            "The vents are ordered oldest to newest so a timeline component can render them top-to-bottom without a client-side sort. " +
+            "Use the options 'from'/'to' parameters to restrict the timeline to any logical clinical period. " +
+            "When a patient has no recorded audit events in our service, an empty list is a valid response")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patient audit timeline",
+                    content = @Content(schema = @Schema(implementation = AuditLogTimelineResource.class))),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error",
+                    content = @Content)
+    })
+    public ResponseEntity<?> getPatientAuditTimeline(
+            @Parameter(description = "Patient identifier", example = "15")
+            @PathVariable Long patientId,
+
+            @Parameter(description = "Inclusive lower bound for performedAt (use format ISO-8601)", example = "2026-01-01T00:00:00Z")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Nullable Instant from,
+
+            @Parameter(description = "Inclusive upper bound for performedAt (use format ISO-8601)", example = "2026-12-31T23:59:59Z")
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) @Nullable Instant to
+    ) {
+        var query = new GetPatientAuditTimelineQuery(patientId, from, to);
+        var result = auditLogQueryService.handle(query);
+
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                events -> toTimelineResource(patientId, from, to, events),
+                HttpStatus.OK
+        );
+    }
+
+
     private GetAuditLogsQuery toQueryFromFilter(AuditLogFilterResource filter) {
         return new GetAuditLogsQuery(
                 filter.patientId(),
@@ -169,5 +203,19 @@ public class AuditLogsController {
                 filter.page(),
                 filter.size()
         );
+    }
+
+    private AuditLogTimelineResource toTimelineResource(
+            Long patientId,
+            @Nullable
+            Instant from,
+            @Nullable
+            Instant to,
+            List<AuditLog> events
+    ){
+        List<AuditLogTimelineItemResource> items = events.stream().map(AuditLogTimelineItemResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return new AuditLogTimelineResource(patientId, from, to, items.size(), items);
+
     }
 }

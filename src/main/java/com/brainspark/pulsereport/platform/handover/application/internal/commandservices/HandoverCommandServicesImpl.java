@@ -19,7 +19,8 @@ public class HandoverCommandServicesImpl implements HandoverCommandService {
     @Override
     public Result<Long, ApplicationError> handle(CreateHandoverCommand command) {
         if (handoverRepository.existsByTitle(command.title()))
-            return Result.failure(ApplicationError.conflict("Handover", "Title %s already exists".formatted(command.title())));
+            return Result.failure(
+                    ApplicationError.conflict("Handover", "Title %s already exists".formatted(command.title())));
         var handover = new Handover(command);
         try {
             handover = handoverRepository.save(handover);
@@ -28,4 +29,20 @@ public class HandoverCommandServicesImpl implements HandoverCommandService {
         }
         return Result.success(handover.getId());
     }
-}
+
+    @Override
+    public Result<Handover, ApplicationError> handle(com.brainspark.pulsereport.platform.handover.domain.model.commands.AcknowledgeHandoverCommand command) {
+        var handoverOptional = handoverRepository.findById(command.handoverId());
+        if (handoverOptional.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("Handover", "Handover not found with ID %d".formatted(command.handoverId())));
+        }
+        var handover = handoverOptional.get();
+        handover.acknowledge(command.incomingNurseId(), command.additionalNotes());
+        try {
+            handover = handoverRepository.save(handover);
+        } catch (Exception e) {
+            return Result.failure(ApplicationError.unexpected("acknowledge-handover", e.getMessage()));
+        }
+        return Result.success(handover);
+    }
+}=======}>>>>>>>main

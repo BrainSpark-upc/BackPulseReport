@@ -19,7 +19,7 @@ public record AuditLogDetailResource(
         @Schema(description = "Patient identifier", example = "24")
         Long patientId,
 
-        @Schema(description = "Wheter this entry is scoped to a specific patient", example= "true")
+        @Schema(description = "Whether this entry is scoped to a specific patient", example= "true")
         boolean patientScoped,
 
         @Schema(description = "Type of the audited entity", example = "VITAL_SIGNS")

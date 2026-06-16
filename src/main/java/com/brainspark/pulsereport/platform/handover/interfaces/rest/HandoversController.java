@@ -132,4 +132,40 @@ public class HandoversController {
         var resource = com.brainspark.pulsereport.platform.handover.interfaces.rest.transform.HandoverDetailedResourceFromEntityAssembler.toResourceFromEntity(handover.get());
         return ResponseEntity.ok(resource);
     }
+
+    /**
+     * Acknowledge a handover
+     *
+     * @param handoverId The handover ID
+     * @param resource   The acknowledge resource with incoming nurse ID and notes
+     * @return The updated {@link HandoverResource}
+     */
+    @org.springframework.web.bind.annotation.PatchMapping("/{handoverId}/acknowledge")
+    @Operation(summary = "Acknowledge a handover", description = "Allows the incoming nurse to confirm they have read and understood the handover.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Handover acknowledged successfully",
+                    content = @Content(schema = @Schema(implementation = HandoverResource.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "Handover not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data")
+    })
+    public ResponseEntity<HandoverResource> acknowledgeHandover(
+            @org.springframework.web.bind.annotation.PathVariable Long handoverId,
+            @RequestBody com.brainspark.pulsereport.platform.handover.interfaces.rest.resources.AcknowledgeHandoverResource resource) {
+        
+        var command = com.brainspark.pulsereport.platform.handover.interfaces.rest.transform.AcknowledgeHandoverCommandFromResourceAssembler.toCommandFromResource(handoverId, resource);
+        var result = handoverCommandService.handle(command);
+        
+        if (result.isFailure()) {
+            if (result.error().type().equals(com.brainspark.pulsereport.platform.shared.application.result.ApplicationErrorType.NOT_FOUND)) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.badRequest().build();
+        }
+        
+        var responseResource = HandoverResourceFromEntityAssembler.toResourceFromEntity(result.value());
+        return ResponseEntity.ok(responseResource);
+    }
 }

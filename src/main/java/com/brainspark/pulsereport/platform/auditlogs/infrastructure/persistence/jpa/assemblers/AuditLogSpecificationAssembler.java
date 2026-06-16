@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence
 
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetPatientAuditTimelineQuery;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 
@@ -35,6 +36,22 @@ public final class AuditLogSpecificationAssembler {
             if (query.performedBy() != null && !query.performedBy().isBlank()) {
                 predicates.add(criteriaBuilder.equal(root.get("performedBy"), query.performedBy()));
             }
+            if (query.from() != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("performedAt"), query.from()));
+            }
+            if (query.to() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("performedAt"), query.to()));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+    public static Specification<AuditLog> fromPatientTimelineQuery(GetPatientAuditTimelineQuery query) {
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(criteriaBuilder.equal(root.get("patientId"), query.patientId()));
+
             if (query.from() != null) {
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("performedAt"), query.from()));
             }

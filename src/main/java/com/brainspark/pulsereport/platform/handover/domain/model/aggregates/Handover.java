@@ -25,6 +25,11 @@ public class Handover extends AbstractDomainAggregateRoot<Handover> {
     @Setter
     private HandoverStatus status;
 
+    @Setter
+    private Long incomingNurseId;
+
+    @Setter
+    private String additionalNotes;
 
     public Handover() {
         this.title = Strings.EMPTY;
@@ -45,5 +50,11 @@ public class Handover extends AbstractDomainAggregateRoot<Handover> {
         this.title = title;
         this.description = description;
         return this;
+    }
+
+    public void acknowledge(Long incomingNurseId, String additionalNotes) {
+        this.incomingNurseId = incomingNurseId;
+        this.additionalNotes = additionalNotes;
+        this.status = HandoverStatus.ACKNOWLEDGED;
     }
 }
