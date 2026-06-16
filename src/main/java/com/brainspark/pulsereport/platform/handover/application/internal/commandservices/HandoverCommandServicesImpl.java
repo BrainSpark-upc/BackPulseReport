@@ -19,7 +19,8 @@ public class HandoverCommandServicesImpl implements HandoverCommandService {
     @Override
     public Result<Long, ApplicationError> handle(CreateHandoverCommand command) {
         if (handoverRepository.existsByTitle(command.title()))
-            return Result.failure(ApplicationError.conflict("Handover", "Title %s already exists".formatted(command.title())));
+            return Result.failure(
+                    ApplicationError.conflict("Handover", "Title %s already exists".formatted(command.title())));
         var handover = new Handover(command);
         try {
             handover = handoverRepository.save(handover);
@@ -44,4 +45,4 @@ public class HandoverCommandServicesImpl implements HandoverCommandService {
         }
         return Result.success(handover);
     }
-}
+}=======}>>>>>>>main
