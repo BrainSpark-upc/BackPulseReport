@@ -5,6 +5,7 @@ import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.Aud
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetPatientAuditTimelineQuery;
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetEntityAuditHistoryQuery;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.assemblers.AuditLogSpecificationAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.infrastructure.persistence.jpa.repositories.AuditLogRepository;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
@@ -60,11 +61,23 @@ public class AuditLogQueryServiceImpl implements AuditLogQueryService {
     public Result<List<AuditLog>, ApplicationError> handle(GetPatientAuditTimelineQuery query) {
         try {
             Specification<AuditLog> spec = AuditLogSpecificationAssembler.fromPatientTimelineQuery(query);
-            Sort chronological = Sort.by(Sort.Direction.ASC, "performedAt");
-            List<AuditLog> events = auditLogRepository.findAll(spec, chronological);
+            List<AuditLog> events = auditLogRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "performedAt"));
             return Result.success(events);
         } catch (Exception ex) {
             log.error("Unexpected error while building patient audit timeline for patient id={}", query.patientId(), ex);
+            return Result.failure(ApplicationError.unexpected("AuditLogQueryService", ex.getMessage()));
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Result<List<AuditLog>, ApplicationError> handle (GetEntityAuditHistoryQuery query){
+        try{
+            Specification<AuditLog> spec = AuditLogSpecificationAssembler.fromEntityHistoryQuery(query);
+            List<AuditLog> events  = auditLogRepository.findAll(spec, Sort.by(Sort.Direction.ASC, "performedAt"));
+            return Result.success(events);
+        } catch (Exception ex){
+            log.error("Unexpected error while building entity audit history for entityType={}, entityId={}", query.entityType(), query.entityId(), ex);
             return Result.failure(ApplicationError.unexpected("AuditLogQueryService", ex.getMessage()));
         }
     }

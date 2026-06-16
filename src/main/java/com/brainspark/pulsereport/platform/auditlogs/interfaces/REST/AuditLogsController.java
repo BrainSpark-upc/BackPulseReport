@@ -1,19 +1,17 @@
 package com.brainspark.pulsereport.platform.auditlogs.interfaces.REST;
 
+import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetEntityAuditHistoryQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.services.AuditLogCommandService;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogsQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetAuditLogByIdQuery;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditActionType;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.valueobjects.AuditedEntityType;
 import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.resources.*;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogResourceFromEntityAssembler;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.CreateAuditLogCommandFromResourceAssembler;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogDetailResourceFromEntityAssembler;
+import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.*;
 import com.brainspark.pulsereport.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import com.brainspark.pulsereport.platform.auditlogs.application.queryservices.AuditLogQueryService;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.aggregates.AuditLog;
 import com.brainspark.pulsereport.platform.auditlogs.domain.model.queries.GetPatientAuditTimelineQuery;
-import com.brainspark.pulsereport.platform.auditlogs.interfaces.REST.transform.AuditLogTimelineItemResourceFromEntityAssembler;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -119,9 +117,7 @@ public class AuditLogsController {
         var filter = new AuditLogFilterResource(
                 patientId, entityType, entityId, actionType, performedBy, from, to, page, size
         );
-        var query = toQueryFromFilter(filter);
-        var result = auditLogQueryService.handle(query);
-
+        var result = auditLogQueryService.handle(toQueryFromFilter(filter));
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
                 resultPage -> PagedResult.from(resultPage, AuditLogResourceFromEntityAssembler::toResourceFromEntity),
@@ -132,8 +128,7 @@ public class AuditLogsController {
     @GetMapping("/{auditLogId}")
     @Operation(
             summary = "Get audit log entry detail",
-            description = "Returns the full detail of a single audit log entry by its identifier. " +
-                    "This is intended for navigation from a patient view, entity history, or dashboard drill-down."
+            description = "Returns the full detail of a single audit log entry by its identifier. "
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Audit log entry detail",
@@ -157,10 +152,10 @@ public class AuditLogsController {
         );
     }
 
-    @GetMapping(value= "/api/v1/patients/{patientId}/audit-logs/timeline", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value= "/patients/{patientId}/timeline", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary="Get patient audit timeline", description = "Returns the full chronological audit trail for a specific patient. " +
-            "The vents are ordered oldest to newest so a timeline component can render them top-to-bottom without a client-side sort. " +
-            "Use the options 'from'/'to' parameters to restrict the timeline to any logical clinical period. " +
+            "The events are ordered oldest to newest so a timeline component can render them top-to-bottom without a client-side sort. " +
+            "Use the optional 'from'/'to' parameters to restrict the timeline to any logical clinical period. " +
             "When a patient has no recorded audit events in our service, an empty list is a valid response")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Patient audit timeline",
@@ -190,6 +185,32 @@ public class AuditLogsController {
         );
     }
 
+    @GetMapping("/entities/{entityType}/{entityId}")
+    @Operation(summary ="Get entity audit history", description="Returns the full chronological audit history for a specific clinical entity " +
+            "(examples: a vital sign record, an SBAR handover, a clinical event, etc). " +
+            "Events are ordered oldest to newest. An empty list is a valid response only whe no audit event exit for the entity."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entity audit history (may be empty)",
+                    content = @Content(schema = @Schema(implementation = AuditLogHistoryResource.class))),
+            @ApiResponse(responseCode = "500", description = "Unexpected server error",
+                    content = @Content)
+    })
+    public ResponseEntity<?> getEntityAuditHistory(
+            @Parameter(description = "Type of the clinical entity", example= "VITAL_SIGNS")
+            @PathVariable AuditedEntityType entityType,
+
+            @Parameter(description="Identifier of the clinical entity instance", example="5t6uy2")
+            @PathVariable String entityId
+    ){
+        var query = new GetEntityAuditHistoryQuery(entityType, entityId);
+        var result = auditLogQueryService.handle(query);
+        return ResponseEntityAssembler.toResponseEntityFromResult(
+                result,
+                events -> toHistoryResource(entityType, entityId, events),
+                HttpStatus.OK
+        );
+    }
 
     private GetAuditLogsQuery toQueryFromFilter(AuditLogFilterResource filter) {
         return new GetAuditLogsQuery(
@@ -213,9 +234,17 @@ public class AuditLogsController {
             Instant to,
             List<AuditLog> events
     ){
-        List<AuditLogTimelineItemResource> items = events.stream().map(AuditLogTimelineItemResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
+        var items = events.stream().map(AuditLogTimelineItemResourceFromEntityAssembler::toResourceFromEntity).toList();
         return new AuditLogTimelineResource(patientId, from, to, items.size(), items);
 
+    }
+
+    private AuditLogHistoryResource toHistoryResource(
+            AuditedEntityType entityType,
+            String entityId,
+            List<AuditLog> events
+    ){
+        var items = events.stream().map(AuditLogHistoryItemResourceFromEntityAssembler::toResourceFromEntity).toList();
+        return new AuditLogHistoryResource(entityType, entityId, items.size(), items);
     }
 }
