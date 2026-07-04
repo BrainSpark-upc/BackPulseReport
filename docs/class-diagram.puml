@@ -20,12 +20,12 @@ skinparam package {
 }
 
 package "Shared Kernel" #E2E8F0 {
-  abstract class AbstractDomainAggregateRoot<T> as SharedAggregate {
+  abstract class "AbstractDomainAggregateRoot<T>" as SharedAggregate {
     - domainEvents: List<Object>
     + registerDomainEvent(event: Object): void
   }
 
-  abstract class AuditableAbstractPersistenceEntity as AuditableEntity {
+  abstract class "AuditableAbstractPersistenceEntity" as AuditableEntity {
     - id: Long
     - createdAt: LocalDateTime
     - updatedAt: LocalDateTime
