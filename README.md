@@ -28,6 +28,7 @@ El código principal se encuentra bajo el paquete `com.brainspark.pulsereport.pl
 
 ```
 src/main/java/com/brainspark/pulsereport/platform/
+├── iam/        # Identidad, autenticación JWT, usuarios y roles
 ├── shared/     # Núcleo compartido (bases de dominio, infraestructura, interfaces)
 └── (otros contextos funcionales)  # Añadir carpetas específicas del dominio (p.ej. patients, vitals, auth)
 ```
@@ -52,7 +53,9 @@ En entornos productivos se recomienda definir las variables sensibles por medio 
 | `DATABASE_PASSWORD`      | Contraseña de la BD                 | `password`                              |
 | `PORT`                   | Puerto de la aplicación             | `8080`                                  |
 | `SPRING_PROFILES_ACTIVE` | Perfil activo de Spring             | `dev`                                    |
-| `JWT_SECRET`             | Secreto para firmar JWT             | `replace-with-a-strong-random-secret`   |
+| `AUTHORIZATION_JWT_SECRET` | Secreto para firmar JWT (mínimo 32 bytes) | valor local solo para desarrollo |
+| `IAM_BOOTSTRAP_ADMIN_USERNAME` | Usuario administrador inicial (opcional) | vacío |
+| `IAM_BOOTSTRAP_ADMIN_PASSWORD` | Contraseña del administrador inicial, mínimo 12 caracteres (opcional) | vacío |
 
 Nota: Ajusta los nombres de variables en tus scripts o en el entorno según tus necesidades.
 
@@ -73,7 +76,7 @@ $env:DATABASE_PORT='3306';
 $env:DATABASE_NAME='pulse_report';
 $env:DATABASE_USER='root';
 $env:DATABASE_PASSWORD='password';
-$env:JWT_SECRET='replace-with-a-strong-random-secret';
+$env:AUTHORIZATION_JWT_SECRET='replace-with-a-strong-random-secret-32-bytes';
 .\mvnw clean spring-boot:run
 ```
 
@@ -85,7 +88,7 @@ $env:DATABASE_URL='mysql-host';
 $env:DATABASE_NAME='pulse_report';
 $env:DATABASE_USER='prod_user';
 $env:DATABASE_PASSWORD='prod_password';
-$env:JWT_SECRET='your-production-jwt-secret';
+$env:AUTHORIZATION_JWT_SECRET='your-production-jwt-secret-at-least-32-bytes';
 .\mvnw clean spring-boot:run
 ```
 
@@ -101,7 +104,7 @@ docker run -p 8080:8080 \
   -e DATABASE_NAME=pulse_report \
   -e DATABASE_USER=root \
   -e DATABASE_PASSWORD=password \
-  -e JWT_SECRET=your-secret \
+  -e AUTHORIZATION_JWT_SECRET=your-secret-at-least-32-bytes \
   pulse-report-platform
 ```
 
@@ -127,12 +130,24 @@ Cuando la aplicación esté en ejecución, la documentación interactiva generad
 
 La plataforma incluye responsabilidades relacionadas con procesos clínicos. Algunos recursos esperables (verificar en la documentación OpenAPI real):
 
-- `/api/v1/authentication` — Autenticación (sign-in / sign-up).
+- `POST /api/v1/authentication/sign-up` — Registra una cuenta con `ROLE_NURSE`.
+- `POST /api/v1/authentication/sign-in` — Autentica y entrega un JWT.
+- `GET /api/v1/users` — Lista usuarios; requiere `ROLE_ADMIN`.
+- `GET /api/v1/roles` — Lista roles; requiere `ROLE_ADMIN`.
 - `/api/v1/patients` — Gestión de pacientes.
 - `/api/v1/vitals` — Registro y consulta de signos vitales.
 - `/api/v1/events` — Eventos clínicos y alertas.
 
 Consulta la documentación generada para ver rutas exactas y contratos.
+
+## Modelo de seguridad
+
+- La API no mantiene sesiones: cada solicitud protegida usa `Authorization: Bearer <token>`.
+- Los roles de PulseReport son `ROLE_NURSE`, `ROLE_DOCTOR` y `ROLE_ADMIN`.
+- El registro público no acepta roles enviados por el cliente; siempre asigna `ROLE_NURSE`.
+- Todas las rutas funcionales requieren autenticación. Swagger y los endpoints de autenticación son públicos.
+- En un entorno nuevo se puede crear un administrador inicial mediante las variables
+  `IAM_BOOTSTRAP_ADMIN_USERNAME` e `IAM_BOOTSTRAP_ADMIN_PASSWORD`.
 
 ## Convenciones de desarrollo
 
