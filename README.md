@@ -149,6 +149,27 @@ Consulta la documentación generada para ver rutas exactas y contratos.
 - En un entorno nuevo se puede crear un administrador inicial mediante las variables
   `IAM_BOOTSTRAP_ADMIN_USERNAME` e `IAM_BOOTSTRAP_ADMIN_PASSWORD`.
 
+### Permisos clínicos
+
+| Capacidad | `ROLE_NURSE` | `ROLE_DOCTOR` | `ROLE_ADMIN` |
+|---|:---:|:---:|:---:|
+| Consultar pacientes | Sí | Sí | Sí |
+| Crear pacientes | Sí | No | Sí |
+| Actualizar pacientes | Sí | Sí | Sí |
+| Eliminar pacientes | No | No | Sí |
+| Consultar signos vitales | Sí | Sí | Sí |
+| Registrar signos vitales | Sí | No | Sí |
+| Consultar handovers | Sí | Sí | Sí |
+| Crear o confirmar handovers | Sí | No | Sí |
+| Consultar, crear o atender alertas | Sí | Sí | Sí |
+| Cerrar alertas | No | Sí | Sí |
+| Consultar auditorías | No | Sí | Sí |
+| Crear registros de auditoría | No | No | Sí |
+| Administrar usuarios y roles | No | No | Sí |
+
+La matriz completa, incluyendo endpoints y criterios de aceptación, está en
+[`docs/user-stories.md`](docs/user-stories.md).
+
 ## Convenciones de desarrollo
 
 - Se favorece una arquitectura modular y separación de responsabilidades (capas de dominio, infraestructura e interfaces).

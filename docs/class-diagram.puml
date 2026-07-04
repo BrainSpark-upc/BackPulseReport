@@ -1,0 +1,510 @@
+@startuml PulseReportPlatformClassDiagram
+
+title PulseReport Platform - Class Diagram
+
+hide empty members
+hide circle
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+skinparam defaultFontName Arial
+skinparam class {
+  BackgroundColor #F8FAFC
+  BorderColor #334155
+  ArrowColor #475569
+}
+skinparam package {
+  BackgroundColor #F1F5F9
+  BorderColor #64748B
+}
+
+package "Shared Kernel" #E2E8F0 {
+  abstract class AbstractDomainAggregateRoot<T> as SharedAggregate {
+    - domainEvents: List<Object>
+    + registerDomainEvent(event: Object): void
+  }
+
+  abstract class AuditableAbstractPersistenceEntity as AuditableEntity {
+    - id: Long
+    - createdAt: LocalDateTime
+    - updatedAt: LocalDateTime
+  }
+
+  class "Result<T>" as Result {
+    - value: T
+    - error: ApplicationError
+    + isSuccess(): boolean
+    + isFailure(): boolean
+  }
+
+  class ApplicationError <<record>> {
+    code: String
+    message: String
+    details: String
+  }
+
+  class ResponseEntityAssembler
+  class GlobalExceptionHandler
+  class OpenApiConfiguration
+  class LocaleConfiguration
+
+  Result o-- ApplicationError
+  ResponseEntityAssembler ..> Result
+  GlobalExceptionHandler ..> ApplicationError
+}
+
+package "IAM Bounded Context" #DBEAFE {
+  enum Roles {
+    ROLE_NURSE
+    ROLE_DOCTOR
+    ROLE_ADMIN
+  }
+
+  class User <<Aggregate Root>> {
+    - id: Long
+    - username: String
+    - password: String
+    - roles: Set<Role>
+    + addRole(role: Role): User
+    + addRoles(roles: List<Role>): User
+  }
+
+  class Role <<Entity>> {
+    - id: Long
+    - name: Roles
+    + getStringName(): String
+    + getDefaultRole(): Role
+    + toRoleFromName(name: String): Role
+  }
+
+  class SignUpCommand <<record>> {
+    username: String
+    password: String
+  }
+
+  class SignInCommand <<record>> {
+    username: String
+    password: String
+  }
+
+  interface UserCommandService {
+    + handle(command: SignUpCommand): Result<User>
+    + handle(command: SignInCommand): Result<User>
+  }
+
+  interface UserQueryService
+  interface RoleCommandService
+  interface RoleQueryService
+  class UserCommandServiceImpl
+  class UserQueryServiceImpl
+  class RoleCommandServiceImpl
+  class RoleQueryServiceImpl
+
+  interface UserRepository
+  interface RoleRepository
+  class UserRepositoryImpl
+  class RoleRepositoryImpl
+  interface UserPersistenceRepository
+  interface RolePersistenceRepository
+
+  class UserPersistenceEntity <<JPA Entity>>
+  class RolePersistenceEntity <<JPA Entity>>
+  class UserPersistenceAssembler
+  class RolePersistenceAssembler
+
+  class AuthenticationController <<REST Controller>> {
+    + signUp(resource: SignUpResource): ResponseEntity
+    + signIn(resource: SignInResource): ResponseEntity
+  }
+
+  class UsersController <<REST Controller>> {
+    + getAllUsers(): ResponseEntity
+    + getUserById(userId: Long): ResponseEntity
+  }
+
+  class RolesController <<REST Controller>> {
+    + getAllRoles(): ResponseEntity
+  }
+
+  class WebSecurityConfiguration {
+    + filterChain(http: HttpSecurity): SecurityFilterChain
+    + authenticationProvider(): DaoAuthenticationProvider
+  }
+
+  class BearerAuthorizationRequestFilter
+  class UserDetailsServiceImpl
+  class BCryptHashingService
+  class BearerTokenService
+  class IamContextFacade
+  class ApplicationReadyEventHandler
+
+  User "1" -- "*" Role
+  Role --> Roles
+  User -up-|> SharedAggregate
+  UserCommandServiceImpl ..|> UserCommandService
+  UserQueryServiceImpl ..|> UserQueryService
+  RoleCommandServiceImpl ..|> RoleCommandService
+  RoleQueryServiceImpl ..|> RoleQueryService
+  UserCommandServiceImpl --> UserRepository
+  UserCommandServiceImpl --> RoleRepository
+  UserCommandServiceImpl --> BCryptHashingService
+  UserCommandServiceImpl --> BearerTokenService
+  UserRepositoryImpl ..|> UserRepository
+  RoleRepositoryImpl ..|> RoleRepository
+  UserRepositoryImpl --> UserPersistenceRepository
+  RoleRepositoryImpl --> RolePersistenceRepository
+  UserRepositoryImpl --> UserPersistenceAssembler
+  RoleRepositoryImpl --> RolePersistenceAssembler
+  UserPersistenceEntity "*" -- "*" RolePersistenceEntity
+  AuthenticationController --> UserCommandService
+  UsersController --> UserQueryService
+  RolesController --> RoleQueryService
+  WebSecurityConfiguration --> BearerAuthorizationRequestFilter
+  WebSecurityConfiguration --> BCryptHashingService
+  BearerAuthorizationRequestFilter --> BearerTokenService
+  BearerAuthorizationRequestFilter --> UserDetailsServiceImpl
+  IamContextFacade --> UserQueryService
+  ApplicationReadyEventHandler --> RoleCommandService
+}
+
+package "Patients Bounded Context" #DCFCE7 {
+  enum PatientStatus
+
+  class Patient <<Aggregate Root>> {
+    - id: Long
+    - firstName: String
+    - lastName: String
+    - documentNumber: String
+    - birthDate: LocalDate
+    - gender: String
+    - diagnosis: String
+    - roomNumber: String
+    - bedNumber: String
+    - attendingPhysician: String
+    - status: PatientStatus
+    - admissionDate: LocalDate
+    + update(command: UpdatePatientCommand): void
+    + getFullName(): String
+  }
+
+  class CreatePatientCommand <<record>>
+  class UpdatePatientCommand <<record>>
+  class DeletePatientCommand <<record>>
+  class GetPatientByIdQuery <<record>>
+  class GetAllPatientsQuery <<record>>
+
+  interface PatientCommandService
+  interface PatientQueryService
+  class PatientCommandServiceImpl
+  class PatientQueryServiceImpl
+  interface PatientRepository
+  class PatientRepositoryImpl
+  interface PatientPersistenceRepository
+  class PatientPersistenceEntity <<JPA Entity>>
+  class PatientPersistenceAssembler
+
+  class PatientsController <<REST Controller>> {
+    + createPatient(resource: CreatePatientResource): ResponseEntity
+    + getAllPatients(): ResponseEntity
+    + getPatientById(patientId: Long): ResponseEntity
+    + updatePatient(patientId: Long, resource: UpdatePatientResource): ResponseEntity
+    + deletePatient(patientId: Long): ResponseEntity
+  }
+
+  Patient -up-|> SharedAggregate
+  Patient --> PatientStatus
+  Patient ..> CreatePatientCommand
+  Patient ..> UpdatePatientCommand
+  PatientCommandServiceImpl ..|> PatientCommandService
+  PatientQueryServiceImpl ..|> PatientQueryService
+  PatientCommandServiceImpl --> PatientRepository
+  PatientQueryServiceImpl --> PatientRepository
+  PatientRepositoryImpl ..|> PatientRepository
+  PatientRepositoryImpl --> PatientPersistenceRepository
+  PatientRepositoryImpl --> PatientPersistenceAssembler
+  PatientPersistenceAssembler ..> Patient
+  PatientPersistenceAssembler ..> PatientPersistenceEntity
+  PatientsController --> PatientCommandService
+  PatientsController --> PatientQueryService
+}
+
+package "Vital Signs Bounded Context" #FEF3C7 {
+  enum RiskLevel
+
+  class BloodPressure <<Value Object>> {
+    systolic: Integer
+    diastolic: Integer
+  }
+
+  class VitalSignRecord <<Aggregate Root>> {
+    - id: Long
+    - patientId: Long
+    - nurseId: Long
+    - heartRate: Integer
+    - respiratoryRate: Integer
+    - bloodPressure: BloodPressure
+    - oxygenSaturation: Integer
+    - temperature: BigDecimal
+    - riskLevel: RiskLevel
+    - recordedAt: LocalDateTime
+    + assignRiskLevel(riskLevel: RiskLevel): VitalSignRecord
+  }
+
+  class CreateVitalSignRecordCommand <<record>>
+  class VitalSignRecordedEvent <<record>>
+  class GetAllVitalSignRecordsQuery <<record>>
+  class GetVitalSignRecordByIdQuery <<record>>
+  class GetVitalSignRecordsByPatientIdQuery <<record>>
+  class GetLatestVitalSignRecordByPatientIdQuery <<record>>
+
+  interface VitalSignRecordCommandService
+  interface VitalSignRecordQueryService
+  class VitalSignRecordCommandServiceImpl
+  class VitalSignRecordQueryServiceImpl
+  interface VitalSignRecordRepository
+  class VitalSignRecordRepositoryImpl
+  interface VitalSignRecordPersistenceRepository
+  class VitalSignRecordPersistenceEntity <<JPA Entity>>
+  class BloodPressurePersistenceEmbeddable <<JPA Embeddable>>
+  class VitalSignRecordPersistenceAssembler
+
+  class VitalSignRecordsController <<REST Controller>> {
+    + createVitalSignRecord(resource: CreateVitalSignRecordResource): ResponseEntity
+    + getAllVitalSignRecords(): ResponseEntity
+    + getVitalSignRecordsByPatientId(patientId: Long): ResponseEntity
+    + getLatestVitalSignRecordByPatientId(patientId: Long): ResponseEntity
+    + getVitalSignRecordById(recordId: Long): ResponseEntity
+  }
+
+  VitalSignRecord -up-|> SharedAggregate
+  VitalSignRecord *-- BloodPressure
+  VitalSignRecord --> RiskLevel
+  VitalSignRecord ..> VitalSignRecordedEvent : emits
+  VitalSignRecordCommandServiceImpl ..|> VitalSignRecordCommandService
+  VitalSignRecordQueryServiceImpl ..|> VitalSignRecordQueryService
+  VitalSignRecordCommandServiceImpl --> VitalSignRecordRepository
+  VitalSignRecordQueryServiceImpl --> VitalSignRecordRepository
+  VitalSignRecordRepositoryImpl ..|> VitalSignRecordRepository
+  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceRepository
+  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceAssembler
+  VitalSignRecordPersistenceEntity *-- BloodPressurePersistenceEmbeddable
+  VitalSignRecordsController --> VitalSignRecordCommandService
+  VitalSignRecordsController --> VitalSignRecordQueryService
+}
+
+package "Handover Bounded Context" #FCE7F3 {
+  enum HandoverStatus {
+    PENDING
+    ACKNOWLEDGED
+  }
+
+  class Handover <<Aggregate Root>> {
+    - id: Long
+    - patientId: Long
+    - title: String
+    - description: String
+    - status: HandoverStatus
+    - incomingNurseId: Long
+    - additionalNotes: String
+    + updateInformation(title: String, description: String): Handover
+    + acknowledge(incomingNurseId: Long, notes: String): void
+  }
+
+  class CreateHandoverCommand <<record>>
+  class AcknowledgeHandoverCommand <<record>>
+  class GetAllHandoversQuery <<record>>
+  class GetAllHandoversByPatientIdQuery <<record>>
+  class GetHandoverByIdQuery <<record>>
+
+  interface HandoverCommandService
+  interface HandoverQueryService
+  class HandoverCommandServicesImpl
+  class HandoverQueryServiceImpl
+  interface HandoverRepository
+  class HandoverRepositoryImpl
+  interface HandoverPersistenceRepository
+  class HandoverPersistenceEntity <<JPA Entity>>
+  class HandoverPersistenceAssembler
+
+  class HandoversController <<REST Controller>> {
+    + createHandover(resource: CreateHandoverResource): ResponseEntity
+    + getHandoversByPatientId(patientId: Long, startDate: Date, endDate: Date): ResponseEntity
+    + getHandoverById(handoverId: Long): ResponseEntity
+    + acknowledgeHandover(handoverId: Long, resource: AcknowledgeHandoverResource): ResponseEntity
+  }
+
+  Handover -up-|> SharedAggregate
+  Handover --> HandoverStatus
+  HandoverCommandServicesImpl ..|> HandoverCommandService
+  HandoverQueryServiceImpl ..|> HandoverQueryService
+  HandoverCommandServicesImpl --> HandoverRepository
+  HandoverQueryServiceImpl --> HandoverRepository
+  HandoverRepositoryImpl ..|> HandoverRepository
+  HandoverRepositoryImpl --> HandoverPersistenceRepository
+  HandoverRepositoryImpl --> HandoverPersistenceAssembler
+  HandoversController --> HandoverCommandService
+  HandoversController --> HandoverQueryService
+}
+
+package "Critical Events Bounded Context" #FEE2E2 {
+  enum AlertType
+  enum AlertSeverity
+
+  enum AlertStatus {
+    OPEN
+    ATTENDED
+    CLOSED
+  }
+
+  class Alert <<Aggregate Root>> {
+    - id: Long
+    - patientId: Long
+    - type: AlertType
+    - severity: AlertSeverity
+    - description: String
+    - status: AlertStatus
+    - triggeredBy: String
+    - attendedBy: String
+    - attendedAt: LocalDateTime
+    - closedBy: String
+    - resolutionNotes: String
+    - closedAt: LocalDateTime
+    + attend(command: AttendAlertCommand): void
+    + close(command: CloseAlertCommand): void
+  }
+
+  class CreateAlertCommand <<record>>
+  class AttendAlertCommand <<record>>
+  class CloseAlertCommand <<record>>
+  class GetAllAlertsQuery <<record>>
+  class GetAlertsByPatientIdQuery <<record>>
+  class GetAlertByIdQuery <<record>>
+
+  interface AlertCommandService
+  interface AlertQueryService
+  class AlertCommandServiceImpl
+  class AlertQueryServiceImpl
+  interface AlertRepository
+  class AlertRepositoryImpl
+  interface AlertPersistenceRepository
+  class AlertPersistenceEntity <<JPA Entity>>
+  class AlertPersistenceAssembler
+
+  class AlertsController <<REST Controller>> {
+    + createAlert(resource: CreateAlertResource): ResponseEntity
+    + getAllAlerts(): ResponseEntity
+    + getAlertsByPatientId(patientId: Long): ResponseEntity
+    + getAlertById(alertId: Long): ResponseEntity
+    + attendAlert(alertId: Long, resource: AttendAlertResource): ResponseEntity
+    + closeAlert(alertId: Long, resource: CloseAlertResource): ResponseEntity
+  }
+
+  Alert -up-|> SharedAggregate
+  Alert --> AlertType
+  Alert --> AlertSeverity
+  Alert --> AlertStatus
+  AlertCommandServiceImpl ..|> AlertCommandService
+  AlertQueryServiceImpl ..|> AlertQueryService
+  AlertCommandServiceImpl --> AlertRepository
+  AlertQueryServiceImpl --> AlertRepository
+  AlertRepositoryImpl ..|> AlertRepository
+  AlertRepositoryImpl --> AlertPersistenceRepository
+  AlertRepositoryImpl --> AlertPersistenceAssembler
+  AlertsController --> AlertCommandService
+  AlertsController --> AlertQueryService
+}
+
+package "Audit Logs Bounded Context" #EDE9FE {
+  enum AuditedEntityType
+  enum AuditActionType
+
+  class AuditMetadata <<Value Object>> {
+    metadataJson: String
+  }
+
+  class AuditLog <<Aggregate Root / JPA Entity>> {
+    - patientId: Long
+    - entityType: AuditedEntityType
+    - entityId: String
+    - actionType: AuditActionType
+    - performedBy: String
+    - performedAt: Instant
+    - metadata: AuditMetadata
+    + create(command: CreateAuditLogCommand): AuditLog
+  }
+
+  class CreateAuditLogCommand <<record>>
+  class GetAuditLogsQuery <<record>>
+  class GetAuditLogByIdQuery <<record>>
+  class GetPatientAuditTimelineQuery <<record>>
+  class GetEntityAuditHistoryQuery <<record>>
+
+  interface AuditLogCommandService
+  interface AuditLogQueryService
+  class AuditLogCommandServiceImpl
+  class AuditLogQueryServiceImpl
+  interface AuditLogRepository
+  class AuditLogSpecificationAssembler
+
+  class AuditLogsController <<REST Controller>> {
+    + createAuditLog(resource: CreateAuditLogResource): ResponseEntity
+    + getAuditLogs(filters, page, size): ResponseEntity
+    + getAuditLogById(auditLogId: Long): ResponseEntity
+    + getPatientAuditTimeline(patientId: Long, from: Instant, to: Instant): ResponseEntity
+    + getEntityAuditHistory(entityType: AuditedEntityType, entityId: String): ResponseEntity
+  }
+
+  AuditLog -up-|> AuditableEntity
+  AuditLog *-- AuditMetadata
+  AuditLog --> AuditedEntityType
+  AuditLog --> AuditActionType
+  AuditLogCommandServiceImpl ..|> AuditLogCommandService
+  AuditLogQueryServiceImpl ..|> AuditLogQueryService
+  AuditLogCommandServiceImpl --> AuditLogRepository
+  AuditLogQueryServiceImpl --> AuditLogRepository
+  AuditLogsController --> AuditLogCommandService
+  AuditLogsController --> AuditLogQueryService
+  AuditLogRepository ..> AuditLogSpecificationAssembler
+}
+
+' Logical cross-context references are stored as identifiers to preserve
+' bounded-context independence.
+VitalSignRecord ..> Patient : patientId
+Handover ..> Patient : patientId
+Alert ..> Patient : patientId
+AuditLog ..> Patient : patientId
+VitalSignRecord ..> User : nurseId
+Handover ..> User : incomingNurseId
+Alert ..> User : performed by username
+AuditLog ..> User : performedBy
+
+WebSecurityConfiguration ..> PatientsController : authorizes
+WebSecurityConfiguration ..> VitalSignRecordsController : authorizes
+WebSecurityConfiguration ..> HandoversController : authorizes
+WebSecurityConfiguration ..> AlertsController : authorizes
+WebSecurityConfiguration ..> AuditLogsController : authorizes
+
+note right of WebSecurityConfiguration
+  Public:
+  - authentication
+  - Swagger / OpenAPI
+
+  NURSE:
+  - patients, vital signs
+  - handovers, alert attendance
+
+  DOCTOR:
+  - clinical read access
+  - alert closure, audit read
+
+  ADMIN:
+  - all API capabilities
+end note
+
+note bottom of AuditLog
+  Append-only clinical traceability.
+  No update or delete operation is exposed.
+end note
+
+@enduml
