@@ -120,7 +120,37 @@ public class WebSecurityConfiguration {
                                 "/swagger-ui/**",
                                 "/swagger-resources/**",
                                 "/webjars/**").permitAll()
+
+                        // IAM administration
                         .requestMatchers("/api/v1/users/**", "/api/v1/roles/**").hasRole("ADMIN")
+
+                        // Append-only clinical audit trail
+                        .requestMatchers(HttpMethod.POST, "/api/v1/audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/audit-logs/**").hasAnyRole("DOCTOR", "ADMIN")
+
+                        // Patients
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/patients/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/patients/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/patients/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/patients/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+
+                        // Vital signs
+                        .requestMatchers(HttpMethod.POST, "/api/v1/vital-sign-records/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/vital-sign-records/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+
+                        // Nursing handovers
+                        .requestMatchers(HttpMethod.POST, "/api/v1/handovers/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/handovers/**").hasAnyRole("NURSE", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/handovers/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+
+                        // Clinical alerts
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/alerts/*/close").hasAnyRole("DOCTOR", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/v1/alerts/*/attend").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/alerts/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/alerts/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+
+                        // Any future API endpoint remains restricted to known application roles.
+                        .requestMatchers("/api/v1/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
