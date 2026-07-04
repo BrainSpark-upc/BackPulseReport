@@ -14,7 +14,7 @@
 
     <groupId>com.brainspark.pulsereport</groupId>
     <artifactId>platform</artifactId>
-    <version>0.25.0</version>
+    <version>0.26.0</version>
     <name>PulseReport Platform</name>
     <description>PulseReport Platform is a RESTful API built with Java, Spring Boot and MySQL to support clinical processes such as patient management, vital signs registration, SBAR handovers, clinical events, alerts and audit logs.</description>
 
@@ -97,6 +97,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
