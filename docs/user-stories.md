@@ -88,7 +88,7 @@ subsequent API requests.
 - Role initialization is idempotent.
 - When both bootstrap administrator variables are configured, an initial admin
   account is created safely.
-- The bootstrap password must satisfy the configured minimum length.
+- The bootstrap password must contain at least 12 characters.
 
 ### TS-IAM-004 - Consult users and roles
 
@@ -202,7 +202,9 @@ care team can monitor their clinical state.
 **Acceptance criteria:**
 
 - The request records patient and nurse identifiers, heart rate, respiratory
-  rate, blood pressure, oxygen saturation, temperature, and risk level.
+  rate, blood pressure, oxygen saturation, temperature, and an optional
+  recording time.
+- A new record starts with the `UNASSESSED` risk level.
 - Physiological range validations reject invalid data.
 - A valid record returns `201 Created`.
 - The aggregate emits a `VitalSignRecordedEvent`.
