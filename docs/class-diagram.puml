@@ -99,6 +99,7 @@ package "IAM Bounded Context" #DBEAFE {
   class SignUpCommand <<record>> {
     username: String
     password: String
+    roles: List<Role>
   }
 
   class SignInCommand <<record>> {

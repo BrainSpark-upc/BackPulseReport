@@ -43,10 +43,10 @@ authenticated user without the required role return `403 Forbidden`.
 
 ## IAM bounded context
 
-### TS-IAM-001 - Register a nurse account
+### TS-IAM-001 - Register a clinical staff account
 
-**As a** new clinical user, **I want** to register an account, **so that** I can
-access the platform with a personal identity.
+**As a** new clinical user, **I want** to register as a nurse or doctor, **so
+that** my account starts with the permissions required for my work.
 
 **Endpoint:** `POST /api/v1/authentication/sign-up`
 
@@ -54,10 +54,11 @@ access the platform with a personal identity.
 
 **Acceptance criteria:**
 
-- Given a valid unique username and password, when the request is submitted,
-  then a user is created.
-- The server always assigns `ROLE_NURSE`; client-provided roles are not
-  accepted.
+- Given a valid unique username, password, and clinical role, when the request
+  is submitted, then a user is created.
+- Public registration accepts only `ROLE_NURSE` or `ROLE_DOCTOR`.
+- `ROLE_ADMIN` is rejected during public registration and remains available
+  only through the administrator-protected role assignment endpoint.
 - The password is stored as a BCrypt hash and is never returned.
 - A duplicated username or invalid request is rejected with the appropriate
   error response.
