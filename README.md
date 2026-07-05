@@ -130,7 +130,7 @@ Cuando la aplicación esté en ejecución, la documentación interactiva generad
 
 La plataforma incluye responsabilidades relacionadas con procesos clínicos. Algunos recursos esperables (verificar en la documentación OpenAPI real):
 
-- `POST /api/v1/authentication/sign-up` — Registra una cuenta con `ROLE_NURSE`.
+- `POST /api/v1/authentication/sign-up` — Registra una cuenta clínica con `ROLE_NURSE` o `ROLE_DOCTOR`.
 - `POST /api/v1/authentication/sign-in` — Autentica y entrega un JWT.
 - `GET /api/v1/users` — Lista usuarios; requiere `ROLE_ADMIN`.
 - `GET /api/v1/roles` — Lista roles; requiere `ROLE_ADMIN`.
@@ -144,7 +144,8 @@ Consulta la documentación generada para ver rutas exactas y contratos.
 
 - La API no mantiene sesiones: cada solicitud protegida usa `Authorization: Bearer <token>`.
 - Los roles de PulseReport son `ROLE_NURSE`, `ROLE_DOCTOR` y `ROLE_ADMIN`.
-- El registro público no acepta roles enviados por el cliente; siempre asigna `ROLE_NURSE`.
+- El registro público acepta únicamente `ROLE_NURSE` o `ROLE_DOCTOR`; `ROLE_ADMIN`
+  solo puede asignarse mediante el endpoint administrativo protegido.
 - Todas las rutas funcionales requieren autenticación. Swagger y los endpoints de autenticación son públicos.
 - En un entorno nuevo se puede crear un administrador inicial mediante las variables
   `IAM_BOOTSTRAP_ADMIN_USERNAME` e `IAM_BOOTSTRAP_ADMIN_PASSWORD`.

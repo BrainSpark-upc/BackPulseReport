@@ -20,7 +20,7 @@ public class SignUpCommandFromResourceAssembler {
         return new SignUpCommand(
                 resource.username(),
                 resource.password(),
-                List.of(Role.getDefaultRole())
+                List.of(Role.toRoleFromName(resource.role()))
         );
     }
 }
