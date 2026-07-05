@@ -23,6 +23,7 @@ Every technical story is considered done when:
 | Sign up and sign in | Yes | Yes | Yes | Yes |
 | Swagger UI and OpenAPI document | Yes | Yes | Yes | Yes |
 | List users and roles | No | No | No | Yes |
+| Assign user roles | No | No | No | Yes |
 | Read patients | No | Yes | Yes | Yes |
 | Create patients | No | Yes | No | Yes |
 | Update patients | No | Yes | Yes | Yes |
@@ -121,6 +122,24 @@ by role, **so that** users only perform duties related to their work.
 - A future endpoint under `/api/v1/**` is restricted to a known application
   role by default.
 - Authentication failures return `401`; insufficient permissions return `403`.
+
+### TS-IAM-006 - Assign user roles
+
+**As an** administrator, **I want** to change the roles assigned to a user,
+**so that** clinical staff can be promoted without direct database access.
+
+**Endpoint:** `PATCH /api/v1/users/{userId}/roles`
+
+**Role:** `ROLE_ADMIN`
+
+**Acceptance criteria:**
+
+- The request replaces the user's role set with the provided roles.
+- An administrator cannot change their own roles; the attempt is rejected
+  with `422 Unprocessable Entity`.
+- An unknown user or role name returns `404 Not Found`.
+- An empty role list is rejected with `400 Bad Request`.
+- The response returns the updated user with its new roles.
 
 ## Patients bounded context
 

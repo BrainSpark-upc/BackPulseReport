@@ -6,6 +6,7 @@ import com.brainspark.pulsereport.platform.iam.application.internal.outboundserv
 import com.brainspark.pulsereport.platform.iam.domain.model.aggregates.User;
 import com.brainspark.pulsereport.platform.iam.domain.model.commands.SignInCommand;
 import com.brainspark.pulsereport.platform.iam.domain.model.commands.SignUpCommand;
+import com.brainspark.pulsereport.platform.iam.domain.model.commands.UpdateUserRolesCommand;
 import com.brainspark.pulsereport.platform.iam.domain.model.entities.Role;
 import com.brainspark.pulsereport.platform.iam.domain.repositories.RoleRepository;
 import com.brainspark.pulsereport.platform.iam.domain.repositories.UserRepository;
@@ -71,6 +72,38 @@ public class UserCommandServiceImpl implements UserCommandService {
 
         var user = new User(command.username(), hashingService.encode(command.password()), resolvedRoles);
         return Result.success(userRepository.save(user));
+    }
+
+    @Override
+    @Transactional
+    public Result<User, ApplicationError> handle(UpdateUserRolesCommand command) {
+        if (command.roles().isEmpty()) {
+            return Result.failure(ApplicationError.validationError(
+                    "roles",
+                    "At least one role is required"
+            ));
+        }
+        var user = userRepository.findById(command.userId());
+        if (user.isEmpty()) {
+            return Result.failure(ApplicationError.notFound("User", String.valueOf(command.userId())));
+        }
+        if (user.get().getUsername().equals(command.requestedBy())) {
+            return Result.failure(ApplicationError.businessRuleViolation(
+                    "update user roles",
+                    "Administrators cannot change their own roles"
+            ));
+        }
+        var resolvedRoles = new java.util.ArrayList<Role>();
+        for (var requestedRole : command.roles()) {
+            var persistedRole = roleRepository.findByName(requestedRole.getName());
+            if (persistedRole.isEmpty()) {
+                return Result.failure(ApplicationError.notFound("Role", requestedRole.getStringName()));
+            }
+            resolvedRoles.add(persistedRole.get());
+        }
+        var targetUser = user.get();
+        targetUser.setRoles(new java.util.HashSet<>(resolvedRoles));
+        return Result.success(userRepository.save(targetUser));
     }
 
     private Result<ImmutablePair<User, String>, ApplicationError> invalidCredentials() {
