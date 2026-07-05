@@ -1,24 +1,40 @@
 @startuml PulseReportPlatformClassDiagram
 
-title PulseReport Platform - Class Diagram
+title <b>PulseReport Platform — Class Diagram</b>
 
 hide empty members
 hide circle
 skinparam shadowing false
 skinparam packageStyle rectangle
-skinparam linetype ortho
 skinparam classAttributeIconSize 0
 skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam roundCorner 8
+skinparam titleFontSize 20
+skinparam nodesep 30
+skinparam ranksep 45
 skinparam class {
-  BackgroundColor #F8FAFC
-  BorderColor #334155
-  ArrowColor #475569
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  FontStyle bold
+  StereotypeFontSize 10
 }
 skinparam package {
-  BackgroundColor #F1F5F9
+  FontStyle bold
+  FontSize 14
   BorderColor #64748B
 }
+skinparam arrow {
+  Color #64748B
+  FontColor #475569
+  FontSize 11
+}
+skinparam note {
+  BackgroundColor #FEFCE8
+  BorderColor #CA8A04
+}
 
+' ===================== SHARED KERNEL (top tier) =====================
 package "Shared Kernel" #E2E8F0 {
   abstract class "AbstractDomainAggregateRoot<T>" as SharedAggregate {
     - domainEvents: List<Object>
@@ -52,8 +68,10 @@ package "Shared Kernel" #E2E8F0 {
   Result o-- ApplicationError
   ResponseEntityAssembler ..> Result
   GlobalExceptionHandler ..> ApplicationError
+  OpenApiConfiguration -[hidden]- LocaleConfiguration
 }
 
+' ===================== IAM (second tier, left) =====================
 package "IAM Bounded Context" #DBEAFE {
   enum Roles {
     ROLE_NURSE
@@ -86,6 +104,12 @@ package "IAM Bounded Context" #DBEAFE {
   class SignInCommand <<record>> {
     username: String
     password: String
+  }
+
+  class UpdateUserRolesCommand <<record>> {
+    userId: Long
+    roles: List<Role>
+    requestedBy: String
   }
 
   interface UserCommandService {
@@ -121,6 +145,7 @@ package "IAM Bounded Context" #DBEAFE {
   class UsersController <<REST Controller>> {
     + getAllUsers(): ResponseEntity
     + getUserById(userId: Long): ResponseEntity
+    + updateUserRoles(userId: Long, resource: UpdateUserRolesResource): ResponseEntity
   }
 
   class RolesController <<REST Controller>> {
@@ -139,27 +164,42 @@ package "IAM Bounded Context" #DBEAFE {
   class IamContextFacade
   class ApplicationReadyEventHandler
 
+  ' --- domain ---
   User "1" -- "*" Role
   Role --> Roles
-  User -up-|> SharedAggregate
-  UserCommandServiceImpl ..|> UserCommandService
-  UserQueryServiceImpl ..|> UserQueryService
-  RoleCommandServiceImpl ..|> RoleCommandService
-  RoleQueryServiceImpl ..|> RoleQueryService
+  SignUpCommand -[hidden]- SignInCommand
+
+  ' --- application layer (controllers on top, impls below interfaces) ---
+  AuthenticationController --> UserCommandService
+  UsersController --> UserQueryService
+  RolesController --> RoleQueryService
+  AuthenticationController -[hidden]right- UsersController
+  UsersController -[hidden]right- RolesController
+  UserCommandServiceImpl .up.|> UserCommandService
+  UserQueryServiceImpl .up.|> UserQueryService
+  RoleCommandServiceImpl .up.|> RoleCommandService
+  RoleQueryServiceImpl .up.|> RoleQueryService
+  UserCommandServiceImpl ..> SignUpCommand
+  UserCommandServiceImpl ..> SignInCommand
+  UserCommandServiceImpl ..> UpdateUserRolesCommand
+  UsersController --> UserCommandService
+
+  ' --- infrastructure layer ---
   UserCommandServiceImpl --> UserRepository
   UserCommandServiceImpl --> RoleRepository
   UserCommandServiceImpl --> BCryptHashingService
   UserCommandServiceImpl --> BearerTokenService
-  UserRepositoryImpl ..|> UserRepository
-  RoleRepositoryImpl ..|> RoleRepository
+  UserRepositoryImpl .up.|> UserRepository
+  RoleRepositoryImpl .up.|> RoleRepository
   UserRepositoryImpl --> UserPersistenceRepository
   RoleRepositoryImpl --> RolePersistenceRepository
   UserRepositoryImpl --> UserPersistenceAssembler
   RoleRepositoryImpl --> RolePersistenceAssembler
+  UserPersistenceAssembler ..> UserPersistenceEntity
+  RolePersistenceAssembler ..> RolePersistenceEntity
   UserPersistenceEntity "*" -- "*" RolePersistenceEntity
-  AuthenticationController --> UserCommandService
-  UsersController --> UserQueryService
-  RolesController --> RoleQueryService
+
+  ' --- security ---
   WebSecurityConfiguration --> BearerAuthorizationRequestFilter
   WebSecurityConfiguration --> BCryptHashingService
   BearerAuthorizationRequestFilter --> BearerTokenService
@@ -168,6 +208,17 @@ package "IAM Bounded Context" #DBEAFE {
   ApplicationReadyEventHandler --> RoleCommandService
 }
 
+note bottom of WebSecurityConfiguration
+  <b>Authorizes every REST controller</b>
+  Public: authentication, Swagger / OpenAPI
+  NURSE: patients, vital signs,
+    handovers, alert attendance
+  DOCTOR: clinical read access,
+    alert closure, audit read
+  ADMIN: all API capabilities
+end note
+
+' ===================== PATIENTS (second tier, right) =====================
 package "Patients Bounded Context" #DCFCE7 {
   enum PatientStatus
 
@@ -212,23 +263,25 @@ package "Patients Bounded Context" #DCFCE7 {
     + deletePatient(patientId: Long): ResponseEntity
   }
 
-  Patient -up-|> SharedAggregate
   Patient --> PatientStatus
   Patient ..> CreatePatientCommand
   Patient ..> UpdatePatientCommand
-  PatientCommandServiceImpl ..|> PatientCommandService
-  PatientQueryServiceImpl ..|> PatientQueryService
-  PatientCommandServiceImpl --> PatientRepository
-  PatientQueryServiceImpl --> PatientRepository
-  PatientRepositoryImpl ..|> PatientRepository
-  PatientRepositoryImpl --> PatientPersistenceRepository
-  PatientRepositoryImpl --> PatientPersistenceAssembler
-  PatientPersistenceAssembler ..> Patient
-  PatientPersistenceAssembler ..> PatientPersistenceEntity
+  DeletePatientCommand -[hidden]- GetPatientByIdQuery
+  GetPatientByIdQuery -[hidden]- GetAllPatientsQuery
   PatientsController --> PatientCommandService
   PatientsController --> PatientQueryService
+  PatientCommandServiceImpl .up.|> PatientCommandService
+  PatientQueryServiceImpl .up.|> PatientQueryService
+  PatientCommandServiceImpl --> PatientRepository
+  PatientQueryServiceImpl --> PatientRepository
+  PatientRepositoryImpl .up.|> PatientRepository
+  PatientRepositoryImpl --> PatientPersistenceRepository
+  PatientRepositoryImpl --> PatientPersistenceAssembler
+  PatientPersistenceAssembler .up.> Patient
+  PatientPersistenceAssembler ..> PatientPersistenceEntity
 }
 
+' ===================== VITAL SIGNS (third tier) =====================
 package "Vital Signs Bounded Context" #FEF3C7 {
   enum RiskLevel
 
@@ -277,22 +330,26 @@ package "Vital Signs Bounded Context" #FEF3C7 {
     + getVitalSignRecordById(recordId: Long): ResponseEntity
   }
 
-  VitalSignRecord -up-|> SharedAggregate
   VitalSignRecord *-- BloodPressure
   VitalSignRecord --> RiskLevel
   VitalSignRecord ..> VitalSignRecordedEvent : emits
-  VitalSignRecordCommandServiceImpl ..|> VitalSignRecordCommandService
-  VitalSignRecordQueryServiceImpl ..|> VitalSignRecordQueryService
-  VitalSignRecordCommandServiceImpl --> VitalSignRecordRepository
-  VitalSignRecordQueryServiceImpl --> VitalSignRecordRepository
-  VitalSignRecordRepositoryImpl ..|> VitalSignRecordRepository
-  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceRepository
-  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceAssembler
-  VitalSignRecordPersistenceEntity *-- BloodPressurePersistenceEmbeddable
+  CreateVitalSignRecordCommand -[hidden]- GetAllVitalSignRecordsQuery
+  GetAllVitalSignRecordsQuery -[hidden]- GetVitalSignRecordByIdQuery
+  GetVitalSignRecordsByPatientIdQuery -[hidden]- GetLatestVitalSignRecordByPatientIdQuery
   VitalSignRecordsController --> VitalSignRecordCommandService
   VitalSignRecordsController --> VitalSignRecordQueryService
+  VitalSignRecordCommandServiceImpl .up.|> VitalSignRecordCommandService
+  VitalSignRecordQueryServiceImpl .up.|> VitalSignRecordQueryService
+  VitalSignRecordCommandServiceImpl --> VitalSignRecordRepository
+  VitalSignRecordQueryServiceImpl --> VitalSignRecordRepository
+  VitalSignRecordRepositoryImpl .up.|> VitalSignRecordRepository
+  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceRepository
+  VitalSignRecordRepositoryImpl --> VitalSignRecordPersistenceAssembler
+  VitalSignRecordPersistenceAssembler -[hidden]- VitalSignRecordPersistenceEntity
+  VitalSignRecordPersistenceEntity *-- BloodPressurePersistenceEmbeddable
 }
 
+' ===================== HANDOVER (third tier) =====================
 package "Handover Bounded Context" #FCE7F3 {
   enum HandoverStatus {
     PENDING
@@ -334,19 +391,23 @@ package "Handover Bounded Context" #FCE7F3 {
     + acknowledgeHandover(handoverId: Long, resource: AcknowledgeHandoverResource): ResponseEntity
   }
 
-  Handover -up-|> SharedAggregate
   Handover --> HandoverStatus
-  HandoverCommandServicesImpl ..|> HandoverCommandService
-  HandoverQueryServiceImpl ..|> HandoverQueryService
-  HandoverCommandServicesImpl --> HandoverRepository
-  HandoverQueryServiceImpl --> HandoverRepository
-  HandoverRepositoryImpl ..|> HandoverRepository
-  HandoverRepositoryImpl --> HandoverPersistenceRepository
-  HandoverRepositoryImpl --> HandoverPersistenceAssembler
+  CreateHandoverCommand -[hidden]- AcknowledgeHandoverCommand
+  GetAllHandoversQuery -[hidden]- GetAllHandoversByPatientIdQuery
+  GetAllHandoversByPatientIdQuery -[hidden]- GetHandoverByIdQuery
   HandoversController --> HandoverCommandService
   HandoversController --> HandoverQueryService
+  HandoverCommandServicesImpl .up.|> HandoverCommandService
+  HandoverQueryServiceImpl .up.|> HandoverQueryService
+  HandoverCommandServicesImpl --> HandoverRepository
+  HandoverQueryServiceImpl --> HandoverRepository
+  HandoverRepositoryImpl .up.|> HandoverRepository
+  HandoverRepositoryImpl --> HandoverPersistenceRepository
+  HandoverRepositoryImpl --> HandoverPersistenceAssembler
+  HandoverPersistenceAssembler -[hidden]- HandoverPersistenceEntity
 }
 
+' ===================== CRITICAL EVENTS (third tier) =====================
 package "Critical Events Bounded Context" #FEE2E2 {
   enum AlertType
   enum AlertSeverity
@@ -400,21 +461,26 @@ package "Critical Events Bounded Context" #FEE2E2 {
     + closeAlert(alertId: Long, resource: CloseAlertResource): ResponseEntity
   }
 
-  Alert -up-|> SharedAggregate
   Alert --> AlertType
   Alert --> AlertSeverity
   Alert --> AlertStatus
-  AlertCommandServiceImpl ..|> AlertCommandService
-  AlertQueryServiceImpl ..|> AlertQueryService
-  AlertCommandServiceImpl --> AlertRepository
-  AlertQueryServiceImpl --> AlertRepository
-  AlertRepositoryImpl ..|> AlertRepository
-  AlertRepositoryImpl --> AlertPersistenceRepository
-  AlertRepositoryImpl --> AlertPersistenceAssembler
+  Alert ..> AttendAlertCommand
+  Alert ..> CloseAlertCommand
+  CreateAlertCommand -[hidden]- GetAllAlertsQuery
+  GetAlertsByPatientIdQuery -[hidden]- GetAlertByIdQuery
   AlertsController --> AlertCommandService
   AlertsController --> AlertQueryService
+  AlertCommandServiceImpl .up.|> AlertCommandService
+  AlertQueryServiceImpl .up.|> AlertQueryService
+  AlertCommandServiceImpl --> AlertRepository
+  AlertQueryServiceImpl --> AlertRepository
+  AlertRepositoryImpl .up.|> AlertRepository
+  AlertRepositoryImpl --> AlertPersistenceRepository
+  AlertRepositoryImpl --> AlertPersistenceAssembler
+  AlertPersistenceAssembler -[hidden]- AlertPersistenceEntity
 }
 
+' ===================== AUDIT LOGS (third tier) =====================
 package "Audit Logs Bounded Context" #EDE9FE {
   enum AuditedEntityType
   enum AuditActionType
@@ -455,56 +521,53 @@ package "Audit Logs Bounded Context" #EDE9FE {
     + getEntityAuditHistory(entityType: AuditedEntityType, entityId: String): ResponseEntity
   }
 
-  AuditLog -up-|> AuditableEntity
   AuditLog *-- AuditMetadata
   AuditLog --> AuditedEntityType
   AuditLog --> AuditActionType
-  AuditLogCommandServiceImpl ..|> AuditLogCommandService
-  AuditLogQueryServiceImpl ..|> AuditLogQueryService
-  AuditLogCommandServiceImpl --> AuditLogRepository
-  AuditLogQueryServiceImpl --> AuditLogRepository
+  AuditLog ..> CreateAuditLogCommand
+  GetAuditLogsQuery -[hidden]- GetAuditLogByIdQuery
+  GetPatientAuditTimelineQuery -[hidden]- GetEntityAuditHistoryQuery
   AuditLogsController --> AuditLogCommandService
   AuditLogsController --> AuditLogQueryService
+  AuditLogCommandServiceImpl .up.|> AuditLogCommandService
+  AuditLogQueryServiceImpl .up.|> AuditLogQueryService
+  AuditLogCommandServiceImpl --> AuditLogRepository
+  AuditLogQueryServiceImpl --> AuditLogRepository
   AuditLogRepository ..> AuditLogSpecificationAssembler
 }
-
-' Logical cross-context references are stored as identifiers to preserve
-' bounded-context independence.
-VitalSignRecord ..> Patient : patientId
-Handover ..> Patient : patientId
-Alert ..> Patient : patientId
-AuditLog ..> Patient : patientId
-VitalSignRecord ..> User : nurseId
-Handover ..> User : incomingNurseId
-Alert ..> User : performed by username
-AuditLog ..> User : performedBy
-
-WebSecurityConfiguration ..> PatientsController : authorizes
-WebSecurityConfiguration ..> VitalSignRecordsController : authorizes
-WebSecurityConfiguration ..> HandoversController : authorizes
-WebSecurityConfiguration ..> AlertsController : authorizes
-WebSecurityConfiguration ..> AuditLogsController : authorizes
-
-note right of WebSecurityConfiguration
-  Public:
-  - authentication
-  - Swagger / OpenAPI
-
-  NURSE:
-  - patients, vital signs
-  - handovers, alert attendance
-
-  DOCTOR:
-  - clinical read access
-  - alert closure, audit read
-
-  ADMIN:
-  - all API capabilities
-end note
 
 note bottom of AuditLog
   Append-only clinical traceability.
   No update or delete operation is exposed.
 end note
+
+' ===================== SHARED KERNEL INHERITANCE =====================
+User -up-|> SharedAggregate
+Patient -up-|> SharedAggregate
+VitalSignRecord -up-|> SharedAggregate
+Handover -up-|> SharedAggregate
+Alert -up-|> SharedAggregate
+AuditLog -up-|> AuditableEntity
+
+' ===================== PACKAGE GRID (hidden layout links) =====================
+' Row 1: Shared Kernel + IAM / Row 2: Patients + Vital Signs
+' Row 3: Handover + Critical Events / Row 4: Audit Logs
+ApplicationError -[hidden]down- PatientsController
+RolePersistenceEntity -[hidden]down- VitalSignRecordsController
+PatientPersistenceEntity -[hidden]down- HandoversController
+BloodPressurePersistenceEmbeddable -[hidden]down- AlertsController
+HandoverPersistenceEntity -[hidden]down- AuditLogsController
+
+' ===================== CROSS-CONTEXT REFERENCES =====================
+' Logical references are stored as identifiers to preserve
+' bounded-context independence.
+VitalSignRecord .up.> Patient : patientId
+Handover .up.> Patient : patientId
+Alert .up.> Patient : patientId
+AuditLog .up.> Patient : patientId
+VitalSignRecord .up.> User : nurseId
+Handover .up.> User : incomingNurseId
+Alert .up.> User : username
+AuditLog .up.> User : performedBy
 
 @enduml
