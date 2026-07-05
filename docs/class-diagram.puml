@@ -106,6 +106,12 @@ package "IAM Bounded Context" #DBEAFE {
     password: String
   }
 
+  class UpdateUserRolesCommand <<record>> {
+    userId: Long
+    roles: List<Role>
+    requestedBy: String
+  }
+
   interface UserCommandService {
     + handle(command: SignUpCommand): Result<User>
     + handle(command: SignInCommand): Result<User>
@@ -139,6 +145,7 @@ package "IAM Bounded Context" #DBEAFE {
   class UsersController <<REST Controller>> {
     + getAllUsers(): ResponseEntity
     + getUserById(userId: Long): ResponseEntity
+    + updateUserRoles(userId: Long, resource: UpdateUserRolesResource): ResponseEntity
   }
 
   class RolesController <<REST Controller>> {
@@ -174,6 +181,8 @@ package "IAM Bounded Context" #DBEAFE {
   RoleQueryServiceImpl .up.|> RoleQueryService
   UserCommandServiceImpl ..> SignUpCommand
   UserCommandServiceImpl ..> SignInCommand
+  UserCommandServiceImpl ..> UpdateUserRolesCommand
+  UsersController --> UserCommandService
 
   ' --- infrastructure layer ---
   UserCommandServiceImpl --> UserRepository

@@ -3,6 +3,7 @@ package com.brainspark.pulsereport.platform.iam.application.commandservices;
 import com.brainspark.pulsereport.platform.iam.domain.model.aggregates.User;
 import com.brainspark.pulsereport.platform.iam.domain.model.commands.SignInCommand;
 import com.brainspark.pulsereport.platform.iam.domain.model.commands.SignUpCommand;
+import com.brainspark.pulsereport.platform.iam.domain.model.commands.UpdateUserRolesCommand;
 import com.brainspark.pulsereport.platform.shared.application.result.ApplicationError;
 import com.brainspark.pulsereport.platform.shared.application.result.Result;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -27,5 +28,12 @@ public interface UserCommandService {
      */
     Result<User, ApplicationError> handle(SignUpCommand command);
 
+    /**
+     * Handles the replacement of the roles assigned to a user.
+     *
+     * @param command update user roles command
+     * @return updated user aggregate, or an application error
+     */
+    Result<User, ApplicationError> handle(UpdateUserRolesCommand command);
 
 }
