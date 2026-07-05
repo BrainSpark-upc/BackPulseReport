@@ -2,6 +2,7 @@ package com.brainspark.pulsereport.platform.iam.interfaces.rest.resources;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -9,8 +10,8 @@ import jakarta.validation.constraints.Size;
  */
 @Schema(
     name = "SignUpRequest",
-    description = "User sign-up request with credentials and roles",
-    example = "{\"username\": \"nurse.maria\", \"password\": \"SecurePass123!\"}"
+    description = "Clinical staff sign-up request. Public registration only accepts nurse or doctor roles.",
+    example = "{\"username\": \"doctor.maria\", \"password\": \"SecurePass123!\", \"role\": \"ROLE_DOCTOR\"}"
 )
 public record SignUpResource(
     @NotBlank(message = "{validation.not-blank}")
@@ -31,6 +32,18 @@ public record SignUpResource(
         minLength = 8,
         maxLength = 72
     )
-    String password
+    String password,
+
+    @NotBlank(message = "{validation.not-blank}")
+    @Pattern(
+        regexp = "ROLE_NURSE|ROLE_DOCTOR",
+        message = "Public registration only accepts ROLE_NURSE or ROLE_DOCTOR"
+    )
+    @Schema(
+        description = "Clinical role requested by the new user. ROLE_ADMIN can only be assigned by an administrator.",
+        example = "ROLE_DOCTOR",
+        allowableValues = {"ROLE_NURSE", "ROLE_DOCTOR"}
+    )
+    String role
 ) {
 }
