@@ -14,7 +14,7 @@
 
     <groupId>com.brainspark.pulsereport</groupId>
     <artifactId>platform</artifactId>
-    <version>0.30.0</version>
+    <version>0.30.1</version>
     <name>PulseReport Platform</name>
     <description>PulseReport Platform is a RESTful API built with Java, Spring Boot and MySQL to support clinical processes such as patient management, vital signs registration, SBAR handovers, clinical events, alerts and audit logs.</description>
 
