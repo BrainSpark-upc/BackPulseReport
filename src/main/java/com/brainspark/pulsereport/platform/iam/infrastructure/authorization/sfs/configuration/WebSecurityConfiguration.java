@@ -133,7 +133,7 @@ public class WebSecurityConfiguration {
                         .requestMatchers("/api/v1/users/**", "/api/v1/roles/**").hasRole("ADMIN")
 
                         // Append-only clinical audit trail
-                        .requestMatchers(HttpMethod.POST, "/api/v1/audit-logs/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/audit-logs/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/audit-logs/**").hasAnyRole("DOCTOR", "ADMIN")
 
                         // Patients
