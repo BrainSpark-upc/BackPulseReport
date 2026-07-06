@@ -30,6 +30,8 @@ Every technical story is considered done when:
 | Delete patients | No | No | No | Yes |
 | Read vital sign records | No | Yes | Yes | Yes |
 | Create vital sign records | No | Yes | No | Yes |
+| Read clinical events | No | Yes | Yes | Yes |
+| Create clinical events | No | Yes | Yes | Yes |
 | Read handovers | No | Yes | Yes | Yes |
 | Create or acknowledge handovers | No | Yes | No | Yes |
 | Read or create alerts | No | Yes | Yes | Yes |
@@ -248,6 +250,42 @@ that** I can identify changes in the patient's condition.
 - Records can be retrieved globally, by identifier, or by patient.
 - The latest endpoint returns the most recent patient measurement.
 - Unknown records use the shared not-found response.
+
+## Clinical events bounded context
+
+### TS-EVT-001 - Register a clinical event
+
+**As a** clinical staff member, **I want** to register an operational event of
+the shift, **so that** the care team keeps a shared record of what happened.
+
+**Endpoint:** `POST /api/v1/clinical-events`
+
+**Roles:** `ROLE_NURSE`, `ROLE_DOCTOR`, `ROLE_ADMIN`
+
+**Acceptance criteria:**
+
+- The request records patient, event type, severity, title, and description.
+- The authenticated username is stored as the event author.
+- Event type and severity accept only the supported catalog values.
+- A valid event returns `201 Created` with the generated identifier.
+
+### TS-EVT-002 - Consult clinical events
+
+**As a** clinical professional, **I want** to consult registered events, **so
+that** I can follow the operational history of the service and of each patient.
+
+**Endpoints:**
+
+- `GET /api/v1/clinical-events`
+- `GET /api/v1/clinical-events/patients/{patientId}`
+
+**Roles:** `ROLE_NURSE`, `ROLE_DOCTOR`, `ROLE_ADMIN`
+
+**Acceptance criteria:**
+
+- Events can be retrieved globally or filtered by patient.
+- Each event exposes its author and occurrence time.
+- A patient without events returns an empty list.
 
 ## Handover bounded context
 

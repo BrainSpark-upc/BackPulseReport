@@ -146,6 +146,10 @@ public class WebSecurityConfiguration {
                         .requestMatchers(HttpMethod.POST, "/api/v1/vital-sign-records/**").hasAnyRole("NURSE", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/v1/vital-sign-records/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
 
+                        // Operational clinical events
+                        .requestMatchers(HttpMethod.POST, "/api/v1/clinical-events/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/clinical-events/**").hasAnyRole("NURSE", "DOCTOR", "ADMIN")
+
                         // Nursing handovers
                         .requestMatchers(HttpMethod.POST, "/api/v1/handovers/**").hasAnyRole("NURSE", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/handovers/**").hasAnyRole("NURSE", "ADMIN")

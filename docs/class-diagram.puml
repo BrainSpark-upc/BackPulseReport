@@ -542,6 +542,58 @@ note bottom of AuditLog
   No update or delete operation is exposed.
 end note
 
+' ===================== CLINICAL EVENTS =====================
+package "Clinical Events Bounded Context" #FFEDD5 {
+  enum ClinicalEventType
+  enum ClinicalEventSeverity
+
+  class ClinicalEvent <<Aggregate Root>> {
+    - id: Long
+    - patientId: Long
+    - eventType: ClinicalEventType
+    - severity: ClinicalEventSeverity
+    - title: String
+    - description: String
+    - registeredBy: String
+    - occurredAt: LocalDateTime
+  }
+
+  class CreateClinicalEventCommand <<record>>
+  class GetAllClinicalEventsQuery <<record>>
+  class GetClinicalEventsByPatientIdQuery <<record>>
+
+  interface ClinicalEventCommandService
+  interface ClinicalEventQueryService
+  class ClinicalEventCommandServiceImpl
+  class ClinicalEventQueryServiceImpl
+  interface ClinicalEventRepository
+  class ClinicalEventRepositoryImpl
+  interface ClinicalEventPersistenceRepository
+  class ClinicalEventPersistenceEntity <<JPA Entity>>
+  class ClinicalEventPersistenceAssembler
+
+  class ClinicalEventsController <<REST Controller>> {
+    + createClinicalEvent(resource: CreateClinicalEventResource): ResponseEntity
+    + getAllClinicalEvents(): ResponseEntity
+    + getClinicalEventsByPatientId(patientId: Long): ResponseEntity
+  }
+
+  ClinicalEvent --> ClinicalEventType
+  ClinicalEvent --> ClinicalEventSeverity
+  ClinicalEvent ..> CreateClinicalEventCommand
+  GetAllClinicalEventsQuery -[hidden]- GetClinicalEventsByPatientIdQuery
+  ClinicalEventsController --> ClinicalEventCommandService
+  ClinicalEventsController --> ClinicalEventQueryService
+  ClinicalEventCommandServiceImpl .up.|> ClinicalEventCommandService
+  ClinicalEventQueryServiceImpl .up.|> ClinicalEventQueryService
+  ClinicalEventCommandServiceImpl --> ClinicalEventRepository
+  ClinicalEventQueryServiceImpl --> ClinicalEventRepository
+  ClinicalEventRepositoryImpl .up.|> ClinicalEventRepository
+  ClinicalEventRepositoryImpl --> ClinicalEventPersistenceRepository
+  ClinicalEventRepositoryImpl --> ClinicalEventPersistenceAssembler
+  ClinicalEventPersistenceAssembler -[hidden]- ClinicalEventPersistenceEntity
+}
+
 ' ===================== SHARED KERNEL INHERITANCE =====================
 User -up-|> SharedAggregate
 Patient -up-|> SharedAggregate
@@ -570,5 +622,8 @@ VitalSignRecord .up.> User : nurseId
 Handover .up.> User : incomingNurseId
 Alert .up.> User : username
 AuditLog .up.> User : performedBy
+ClinicalEvent -up-|> SharedAggregate
+ClinicalEvent .up.> Patient : patientId
+ClinicalEvent .up.> User : registeredBy
 
 @enduml
