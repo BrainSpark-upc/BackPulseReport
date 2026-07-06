@@ -103,7 +103,8 @@ public class WebSecurityConfiguration {
                     "https://care-labs-pulsereport.netlify.app",
                     "https://*.netlify.app",
                     "https://front-pulsereport.vercel.app",
-                    "https://*.vercel.app"
+                    "https://*.vercel.app",
+                    "https://backpulsereport-production-7576.up.railway.app"
             ));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
             cors.setAllowedHeaders(List.of("*"));

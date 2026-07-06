@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +25,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @SpringBootTest
 @ActiveProfiles("test")
 class ClinicalAuthorizationIntegrationTest {
+
+    private static final String RAILWAY_SWAGGER_ORIGIN =
+            "https://backpulsereport-production-7576.up.railway.app";
 
     @Autowired
     private WebApplicationContext applicationContext;
@@ -50,6 +54,26 @@ class ClinicalAuthorizationIntegrationTest {
         assertEquals(
                 401,
                 execute(HttpMethod.GET, "/api/v1/patients", null)
+        );
+    }
+
+    @Test
+    void shouldAllowSwaggerRequestsFromThePublicRailwayOrigin() throws Exception {
+        var response = mockMvc.perform(
+                        request(HttpMethod.OPTIONS, "/api/v1/authentication/sign-in")
+                                .header(HttpHeaders.ORIGIN, RAILWAY_SWAGGER_ORIGIN)
+                                .header(
+                                        HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD,
+                                        HttpMethod.POST.name()
+                                )
+                )
+                .andReturn()
+                .getResponse();
+
+        assertNotEquals(403, response.getStatus());
+        assertEquals(
+                RAILWAY_SWAGGER_ORIGIN,
+                response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)
         );
     }
 
