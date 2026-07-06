@@ -18,7 +18,7 @@ import java.util.List;
  * Configuration class for OpenAPI/Swagger documentation.
  *
  * This class defines metadata about the API (title, description, version), contact information,
- * licensed terms, available server endpoints across different environments, and security schemes
+ * licensed terms, the current server endpoint, and security schemes
  * used for authentication.
  *
  * The configuration uses Spring beans and property injection to populate OpenAPI metadata from
@@ -62,7 +62,7 @@ public class OpenApiConfiguration {
      * This method builds the following OpenAPI documentation:
      * <ul>
      *   <li><b>API Information:</b> Title, description, version, contact details, and license</li>
-     *   <li><b>Server Endpoints:</b> Defines available API servers for production, staging, and local environments</li>
+     *   <li><b>Server Endpoint:</b> Uses the same origin that serves Swagger UI</li>
      *   <li><b>Security Scheme:</b> Configures JWT Bearer token authentication for all endpoints</li>
      * </ul>
      *
@@ -91,23 +91,13 @@ public class OpenApiConfiguration {
                                 .name("Apache 2.0")
                                 .url("https://www.apache.org/licenses/LICENSE-2.0.html")));
 
-        // Configure Server Endpoints
-
-        // Define the available servers where the API is deployed:
-        // - Production: Main live server
-        // - Staging: Pre-production environment
-        // - Local: Development environment running locally
-
+        // A relative URL keeps Swagger requests on the same origin that served
+        // the documentation. It works in Railway and locally without CORS or
+        // environment-specific hostnames.
         openApi.servers(List.of(
                 new Server()
-                        .url("https://api.brainspark-pulsereport.com")
-                        .description("Production environment"),
-                new Server()
-                        .url("https://staging-api.brainspark-pulsereport.com")
-                        .description("Staging environment"),
-                new Server()
-                        .url("http://localhost:8080")
-                        .description("Local development environment")
+                        .url("/")
+                        .description("Current environment")
         ));
 
         // Configure Security Scheme
