@@ -28,6 +28,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -58,8 +59,14 @@ public class AuditLogsController {
             @ApiResponse(responseCode = "500", description = "Unexpected server error",
                     content = @Content)
     })
-    public ResponseEntity<?> createAuditLog(@Valid @RequestBody CreateAuditLogResource resource) {
-        var command = CreateAuditLogCommandFromResourceAssembler.toCommandFromResource(resource);
+    public ResponseEntity<?> createAuditLog(
+            @Valid @RequestBody CreateAuditLogResource resource,
+            Authentication authentication
+    ) {
+        var command = CreateAuditLogCommandFromResourceAssembler.toCommandFromResource(
+                resource,
+                authentication.getName()
+        );
         var result  = auditLogCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,

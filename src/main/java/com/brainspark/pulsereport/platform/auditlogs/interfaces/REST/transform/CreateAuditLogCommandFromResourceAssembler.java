@@ -16,14 +16,21 @@ public final class CreateAuditLogCommandFromResourceAssembler {
 
     private CreateAuditLogCommandFromResourceAssembler() {}
 
-    public static CreateAuditLogCommand toCommandFromResource(CreateAuditLogResource resource) {
+    public static CreateAuditLogCommand toCommandFromResource(
+            CreateAuditLogResource resource,
+            String authenticatedActor
+    ) {
+        if (authenticatedActor == null || authenticatedActor.isBlank()) {
+            throw new IllegalArgumentException("Authenticated actor is required");
+        }
+
         String metadataJson = serializeMetadata(resource.metadata());
         return new CreateAuditLogCommand(
                 resource.patientId(),
                 resource.entityType(),
                 resource.entityId(),
                 resource.actionType(),
-                resource.performedBy(),
+                authenticatedActor,
                 resource.performedAt(),
                 metadataJson
                 //serializeMetadata(resource.metadata())

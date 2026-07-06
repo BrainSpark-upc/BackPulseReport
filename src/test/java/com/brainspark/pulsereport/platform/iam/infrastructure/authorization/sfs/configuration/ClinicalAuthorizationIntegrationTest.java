@@ -93,6 +93,8 @@ class ClinicalAuthorizationIntegrationTest {
                 Arguments.of(HttpMethod.GET, "/api/v1/patients", "ROLE_DOCTOR"),
                 Arguments.of(HttpMethod.PATCH, "/api/v1/alerts/8/close", "ROLE_DOCTOR"),
                 Arguments.of(HttpMethod.GET, "/api/v1/audit-logs", "ROLE_DOCTOR"),
+                Arguments.of(HttpMethod.POST, "/api/v1/audit-logs", "ROLE_DOCTOR"),
+                Arguments.of(HttpMethod.POST, "/api/v1/audit-logs", "ROLE_NURSE"),
                 Arguments.of(HttpMethod.DELETE, "/api/v1/patients/9", "ROLE_ADMIN"),
                 Arguments.of(HttpMethod.POST, "/api/v1/audit-logs", "ROLE_ADMIN")
         );
